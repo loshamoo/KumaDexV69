@@ -4,23 +4,71 @@ import Header from '../src/components/Header'
 import CoachMarks from '../src/components/CoachMarks'
 import styled, { css } from 'styled-components'
 
-const SHIB_CIRC_DEFAULT = 589.239e12
+const TOKEN_SYMBOLS = ['SHIB', 'LEASH', 'AKITA', 'ELON']
+
+const TOKEN_DEFAULTS = {
+  SHIB: {
+    logo: '/breederlogos/shib.png',
+    circ: 589.239e12,
+    price: 5.115e-6,
+    cex: 87e12,
+    lp: 4.03e6,
+    breeder: 1.261805487e9,
+    priceMin: 1e-7,
+    priceMax: 5e-5,
+    priceStep: 1e-7
+  },
+  LEASH: {
+    logo: '/breederlogos/leash.png',
+    circ: 107646,
+    price: 4.0,
+    cex: 107646 * 0.15,
+    lp: 1.4e4,
+    breeder: 0,
+    priceMin: 0.1,
+    priceMax: 500,
+    priceStep: 0.1
+  },
+  AKITA: {
+    logo: '/breederlogos/akita.png',
+    circ: 92.18e12,
+    price: 4.33e-9,
+    cex: 92.18e12 * 0.15,
+    lp: 2.7e5,
+    breeder: 0,
+    priceMin: 1e-11,
+    priceMax: 1e-6,
+    priceStep: 1e-11
+  },
+  ELON: {
+    logo: '/breederlogos/elon.png',
+    circ: 1e15,
+    price: 3.11e-8,
+    cex: 1e15 * 0.15,
+    lp: 5.3e6,
+    breeder: 0,
+    priceMin: 1e-10,
+    priceMax: 1e-5,
+    priceStep: 1e-10
+  }
+}
 
 const MISSIONS = [
   { id: 'K1', code: 'LAUNCH', pctCirc: 0.001, title: 'Ignition', blurb: 'First on-chain gravity well vs CEX-only discovery.' },
   { id: 'K2', code: 'ORBIT', pctCirc: 0.01, title: 'Deep Foothold', blurb: 'Breeder depth as a liquidity marketshare beachhead.' },
   { id: 'K3', code: 'ESCAPE', pctCirc: 0.02, title: 'Escape Velocity', blurb: 'Structural on-chain discovery pressure leaves off-chain books.' },
-  { id: 'K4', code: 'CAPTURE', pctCirc: 0.05, title: "Can't Ignore", blurb: 'Material reclaim of float from CEX / institutional SHIB.' },
-  { id: 'K5', code: 'DOMINION', pctCirc: 0.1, title: 'Co-Dominance', blurb: 'On-chain gravity rivals off-chain marketmakers.' }
+  { id: 'K4', code: 'CAPTURE', pctCirc: 0.05, title: "Can't Ignore", blurb: 'Material reclaim of float from CEX / institutional books.' },
+  { id: 'K5', code: 'DOMINION', pctCirc: 0.1, title: 'Co-Dominance', blurb: 'On-chain gravity rivals off-chain marketmakers (~10% circ).' }
 ]
 
 const METRIC_KEY = [
-  { id: 'delta', label: 'Δ vs live', meaning: 'Simulated Breeder SHIB minus the live on-chain balance.' },
-  { id: 'mid', label: 'DEX mid move', meaning: 'Toy √impact as % if Δ notional hit assumed ETH DEX SHIB LP depth.' },
-  { id: 'zero', label: 'Zero-Gravity', meaning: 'Breeder SHIB ÷ assumed CEX / institutional float — on-chain share vs off-chain books.' },
-  { id: 'depth', label: 'Depth ×', meaning: 'Breeder SHIB USD ÷ assumed ETH DEX SHIB LP depth.' },
+  { id: 'delta', label: 'Δ vs live', meaning: 'Simulated Breeder balance minus the live on-chain balance.' },
+  { id: 'mid', label: 'DEX mid move', meaning: 'Toy √impact as % if Δ notional hit assumed ETH DEX LP depth.' },
+  { id: 'zero', label: 'Zero-Gravity', meaning: 'Breeder ÷ assumed CEX / institutional float — on-chain share vs off-chain books.' },
+  { id: 'codom', label: 'Co-dom gap', meaning: 'Distance to K5 (10% circ) in token units and % of circ.' },
+  { id: 'depth', label: 'Depth ×', meaning: 'Breeder USD ÷ assumed ETH DEX LP depth.' },
   { id: 'v', label: '√(2GM/r)', meaning: 'Normalized escape score — M = Breeder USD, r = circ × price.' },
-  { id: 'bar', label: 'Supply bar', meaning: 'Orange = Breeder, pink = CEX float proxy, slate = rest of circ.' },
+  { id: 'books', label: 'Books / circ', meaning: 'Assumed CEX float as a share of circulating supply (institutional share estimate).' },
   { id: 'mission', label: 'Mission %', meaning: 'Progress to each circ-marketshare milestone (K1–K5).' }
 ]
 
@@ -29,42 +77,42 @@ const ZERO_GRAVITY_COACH_STEPS = [
     target: '#zg-title',
     title: 'Zero-Gravity Indicator',
     description:
-      'Educational escape-velocity model for Breeder-held SHIB reclaiming liquidity from CEX / institutional books. Not a price oracle — a mission dashboard.',
+      'Educational escape-velocity model for Breeder-held meme singles reclaiming liquidity from CEX / institutional books. Toggle Single vs Mixed; pick SHIB / LEASH / AKITA / ELON. Not a price oracle — a mission dashboard.',
     placement: 'bottom'
   },
   {
     target: '#zg-compare',
     title: 'Breeder vs CEX float',
     description:
-      'Left is on-chain Breeder SHIB (supply + TVL). Right is the assumed CEX / institutional float. The gap between them is the gravity story.',
+      'Left is on-chain Breeder balance (supply + TVL). Right is the assumed CEX / institutional float for the selected token. Use the token dropdown to switch which meme you are measuring.',
     placement: 'bottom'
   },
   {
     target: '#zg-metrics',
     title: 'Impact metrics',
     description:
-      'Δ vs live, toy DEX mid move, depth multiple, and √(2GM/r) escape score update as you simulate. Supply bar under the tiles shows Breeder / CEX / rest of circ.',
+      'Δ vs live, toy DEX mid, Zero-Gravity (vs CEX books), co-dominance gap to K5, depth ×, and √(2GM/r). Supply bar under the tiles shows Breeder / CEX / rest of circ.',
     placement: 'bottom'
   },
   {
     target: '#zg-zero-tile',
     title: 'Zero-Gravity',
     description:
-      'Breeder SHIB ÷ assumed CEX float — your on-chain share of off-chain books. Hint shows Δ vs the live Breeder snapshot.',
+      'Breeder ÷ assumed CEX float — your on-chain share of off-chain books. Hint shows Δ vs the live Breeder snapshot. Aim toward parity (1.0) or early co-dominance of books.',
     placement: 'bottom'
   },
   {
     target: '#zg-controls',
     title: 'Simulate live inputs',
     description:
-      'Drag Breeder SHIB, price, LP depth, or CEX float. LIVE tracks the ~60s API refresh; SIM means you overrode that field. Reset live snaps it back.',
+      'Drag Breeder balance, price, LP depth, or CEX float. LIVE tracks the ~60s API refresh; SIM means you overrode that field. Reset live snaps it back. Switching tokens resets dirty fields.',
     placement: 'top'
   },
   {
     target: '#zg-missions',
     title: 'Mission phases K1–K5',
     description:
-      'Tap a mission to jump Breeder SHIB to that circ-marketshare target — Ignition → Co-Dominance. Progress bars show how close you are.',
+      'Tap a mission to jump Breeder balance to that circ-marketshare target — Ignition → Co-Dominance (10% circ). Mixed mode blends all four Breeder memes for federation co-dominance.',
     placement: 'top'
   }
 ]
@@ -110,14 +158,6 @@ const Page = styled.div`
   gap: 10px;
 `
 
-const TopBar = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-`
-
 const Pill = styled.span`
   font-size: 0.72rem;
   font-weight: 600;
@@ -133,16 +173,40 @@ const Btn = styled.button`
   padding: 6px 12px;
   border-radius: 999px;
   cursor: pointer;
-  border: 1px solid ${({ $primary }) => ($primary ? 'transparent' : 'rgba(255,255,255,0.14)')};
-  background: ${({ $primary }) => ($primary ? '#4d2a52' : 'transparent')};
-  color: ${({ $primary, theme }) => ($primary ? '#fff' : theme.colors.text.secondary)};
+  border: 1px solid ${({ $primary, $active }) => ($primary || $active ? 'transparent' : 'rgba(255,255,255,0.14)')};
+  background: ${({ $primary, $active }) => ($primary || $active ? '#4d2a52' : 'transparent')};
+  color: ${({ $primary, $active, theme }) => ($primary || $active ? '#fff' : theme.colors.text.secondary)};
   &:hover:not(:disabled) {
-    background: ${({ $primary }) => ($primary ? '#3f2153' : 'rgba(255,255,255,0.04)')};
+    background: ${({ $primary, $active }) => ($primary || $active ? '#3f2153' : 'rgba(255,255,255,0.04)')};
     color: ${({ theme }) => theme.colors.text.primary};
   }
   &:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+  }
+`
+
+const ModeToggle = styled.div`
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: ${({ theme }) => theme.colors.background.module};
+`
+
+const TokenSelect = styled.select`
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: ${({ theme }) => theme.colors.background.module};
+  color: ${({ theme }) => theme.colors.text.primary};
+  cursor: pointer;
+  outline: none;
+  &:focus {
+    border-color: rgba(252, 114, 255, 0.45);
   }
 `
 
@@ -156,6 +220,7 @@ const Dash = styled.div`
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: ${({ theme }) => theme.borderRadius.large};
   padding: 16px;
+  overflow: auto;
 `
 
 const HeadRow = styled.div`
@@ -163,30 +228,13 @@ const HeadRow = styled.div`
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 6px;
-  flex-shrink: 0;
-`
-
-const TitleBlock = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-`
-
-const Suit = styled.img`
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  object-fit: cover;
-  object-position: center top;
-  border: 1px solid ${({ theme }) => theme.colors.border.highlight};
+  gap: 8px;
   flex-shrink: 0;
 `
 
 const Title = styled.h1`
   margin: 0;
-  font-size: 1.6rem;
+  font-size: 1.55rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: ${({ theme }) => theme.colors.text.primary};
@@ -205,7 +253,7 @@ const Sub = styled.p`
   font-size: 0.85rem;
   color: ${({ theme }) => theme.colors.text.secondary};
   line-height: 1.4;
-  max-width: 640px;
+  max-width: 680px;
 `
 
 const Body = styled.div`
@@ -255,8 +303,8 @@ const SideStat = styled.div`
 `
 
 const Icon = styled.img`
-  width: 28px;
-  height: 28px;
+  width: ${({ $sm }) => ($sm ? '20px' : '28px')};
+  height: ${({ $sm }) => ($sm ? '20px' : '28px')};
   border-radius: 50%;
   object-fit: cover;
 `
@@ -268,11 +316,20 @@ const Vs = styled.span`
   color: ${({ theme }) => theme.colors.text.tertiary};
 `
 
+const CompareTools = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+`
+
 const Metrics = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
-  @media (max-width: 900px) {
+  @media (max-width: 1000px) {
     grid-template-columns: repeat(3, 1fr);
   }
 `
@@ -423,7 +480,6 @@ const Range = styled.input`
   `}
 `
 
-
 const BottomStack = styled.div`
   margin-top: auto;
   display: flex;
@@ -491,58 +547,6 @@ const Fill = styled.div`
   background: ${({ $done, theme }) => ($done ? theme.colors.success : theme.colors.secondary)};
 `
 
-const Overlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: ${({ theme }) => theme.zIndex.modal};
-  padding: 20px;
-`
-
-const Modal = styled.div`
-  width: 100%;
-  max-width: 480px;
-  background: ${({ theme }) => theme.colors.background.charcoal};
-  border: 1px solid ${({ theme }) => theme.colors.border.highlight};
-  border-radius: 16px;
-  padding: 20px;
-  max-height: 80vh;
-  overflow: auto;
-`
-
-const ModalTitle = styled.h2`
-  margin: 0 0 12px;
-  font-size: 1rem;
-  color: ${({ theme }) => theme.colors.secondary};
-  text-align: center;
-`
-
-const KeyList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`
-
-const KeyRow = styled.div`
-  display: grid;
-  grid-template-columns: 110px 1fr;
-  gap: 10px;
-  font-size: 0.8rem;
-  line-height: 1.35;
-`
-
-const KeyLabel = styled.span`
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.text.primary};
-`
-
-const KeyMeaning = styled.span`
-  color: ${({ theme }) => theme.colors.text.secondary};
-`
-
 const Warn = styled.p`
   margin: 0;
   font-size: 0.8rem;
@@ -556,6 +560,62 @@ const Foot = styled.div`
   text-align: center;
 `
 
+const MixedRows = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`
+
+const MixedRow = styled.div`
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr 1fr 1.4fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  background: ${({ theme }) => theme.colors.background.module};
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr 1fr;
+  }
+`
+
+const MixedSym = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.text.primary};
+`
+
+const MixedCell = styled.div`
+  font-size: 0.78rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  span {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.colors.text.tertiary};
+    margin-bottom: 2px;
+  }
+`
+
+const MiniBar = styled.div`
+  height: 4px;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.background.interactive};
+  overflow: hidden;
+  margin-top: 4px;
+`
+
+const MiniFill = styled.div`
+  height: 100%;
+  width: ${({ $pct }) => Math.min(100, Math.max(0, $pct))}%;
+  background: ${({ $done, theme }) => ($done ? theme.colors.success : theme.colors.secondary)};
+`
+
 function fmtCoef(n, digits = 2) {
   return n.toLocaleString('en-US', {
     minimumFractionDigits: digits,
@@ -563,14 +623,16 @@ function fmtCoef(n, digits = 2) {
   })
 }
 
-function fmtShib(n) {
+function fmtAmt(n) {
   if (!Number.isFinite(n)) return '—'
   const a = Math.abs(n)
   const s = n < 0 ? '-' : ''
   if (a >= 1e12) return s + fmtCoef(a / 1e12, 2) + 'T'
   if (a >= 1e9) return s + fmtCoef(a / 1e9, 2) + 'B'
   if (a >= 1e6) return s + fmtCoef(a / 1e6, 2) + 'M'
-  return s + a.toLocaleString('en-US', { maximumFractionDigits: 0 })
+  if (a >= 1e3) return s + fmtCoef(a / 1e3, 2) + 'K'
+  if (a >= 1) return s + a.toLocaleString('en-US', { maximumFractionDigits: 2 })
+  return s + a.toLocaleString('en-US', { maximumFractionDigits: 4 })
 }
 
 function fmtUsd(n) {
@@ -589,12 +651,17 @@ function fmtPct(n, d = 2) {
   return pct.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) + '%'
 }
 
-/** Signed percent from a fractional move (replaces bps display). */
 function fmtMovePct(n, d = 2) {
   if (!Number.isFinite(n)) return '—'
   const pct = n * 100
   const sign = pct > 0 ? '+' : ''
   return sign + pct.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) + '%'
+}
+
+function fmtPrice(n) {
+  if (!Number.isFinite(n) || n <= 0) return '—'
+  if (n >= 1) return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })
+  return '$' + n.toExponential(2)
 }
 
 function impactBand({ pctCirc, depthMultiple, cexPressured }) {
@@ -616,48 +683,114 @@ function impactBand({ pctCirc, depthMultiple, cexPressured }) {
   return 'Pre-launch'
 }
 
-function marginImpacts({ effectiveShib, baselineShib, shibPrice, lpDepthUsd, cexFloat, circ }) {
-  const deltaShib = effectiveShib - baselineShib
-  const deltaUsd = deltaShib * shibPrice
-  const usd = effectiveShib * shibPrice
+function marginImpacts({ effective, baseline, price, lpDepthUsd, cexFloat, circ }) {
+  const delta = effective - baseline
+  const deltaUsd = delta * price
+  const usd = effective * price
   const depthMultiple = lpDepthUsd > 0 ? usd / lpDepthUsd : 0
-  const floatShare = cexFloat > 0 ? effectiveShib / cexFloat : 0
+  const floatShare = cexFloat > 0 ? effective / cexFloat : 0
   const k = 0.5
   const dexImpactBps =
     lpDepthUsd > 0 && Math.abs(deltaUsd) > 0
       ? k * Math.sign(deltaUsd) * Math.sqrt(Math.abs(deltaUsd) / lpDepthUsd)
       : 0
+  const k5Target = circ * 0.1
+  const coDomGap = Math.max(0, k5Target - effective)
+  const coDomGapPct = circ > 0 ? coDomGap / circ : 0
+  const booksShare = circ > 0 ? cexFloat / circ : 0
   return {
-    deltaShib,
+    delta,
     deltaUsd,
     depthMultiple,
     floatShare,
     dexImpactBps,
-    deltaVsFloat: cexFloat > 0 ? deltaShib / cexFloat : 0,
-    vNorm: Math.sqrt((2 * usd) / Math.max(1, circ * shibPrice)),
-    illustrativeMidMoveUsd: shibPrice * dexImpactBps
+    deltaVsFloat: cexFloat > 0 ? delta / cexFloat : 0,
+    vNorm: Math.sqrt((2 * usd) / Math.max(1, circ * price)),
+    illustrativeMidMoveUsd: price * dexImpactBps,
+    coDomGap,
+    coDomGapPct,
+    booksShare,
+    k5Target
   }
 }
 
+function pickTokenPayload(live, symbol) {
+  const t = live?.tokens?.[symbol]
+  const d = TOKEN_DEFAULTS[symbol]
+  if (t) {
+    return {
+      breeder: Number.isFinite(t.breederBalance) ? t.breederBalance : d.breeder,
+      price: Number.isFinite(t.priceUsd) ? t.priceUsd : d.price,
+      circ: Number.isFinite(t.circ) ? t.circ : d.circ,
+      cex: Number.isFinite(t.cexFloatFallback) ? t.cexFloatFallback : d.cex,
+      lp: Number.isFinite(t.ethDexLpUsd) ? t.ethDexLpUsd : d.lp,
+      logo: t.logo || d.logo,
+      priceSource: t.priceSource,
+      circSource: t.circSource
+    }
+  }
+  // legacy SHIB top-level fallback
+  if (symbol === 'SHIB' && live) {
+    return {
+      breeder: Number.isFinite(live.breederShib) ? live.breederShib : d.breeder,
+      price: Number.isFinite(live.shibPriceUsd) ? live.shibPriceUsd : d.price,
+      circ: Number.isFinite(live.circFallback) ? live.circFallback : d.circ,
+      cex: Number.isFinite(live.cexFloatFallback) ? live.cexFloatFallback : d.cex,
+      lp: Number.isFinite(live.ethDexLpUsdFallback) ? live.ethDexLpUsdFallback : d.lp,
+      logo: d.logo,
+      priceSource: live.priceSource,
+      circSource: 'fallback'
+    }
+  }
+  return { ...d, priceSource: 'fallback', circSource: 'fallback' }
+}
+
 export default function GravityPage() {
+  const [mode, setMode] = useState('single') // single | mixed
+  const [token, setToken] = useState('SHIB')
   const [live, setLive] = useState(null)
   const [err, setErr] = useState('')
   const [loading, setLoading] = useState(true)
-  const [liveBreeder, setLiveBreeder] = useState(1.261805487e9)
-  const [livePrice, setLivePrice] = useState(5.115e-6)
-  const [liveLpDepth, setLiveLpDepth] = useState(4.03e6)
-  const [liveCexFloat, setLiveCexFloat] = useState(87e12)
-  const [circ, setCirc] = useState(SHIB_CIRC_DEFAULT)
 
-  const [simBreeder, setSimBreeder] = useState(1.261805487e9)
-  const [simPrice, setSimPrice] = useState(5.115e-6)
-  const [simLpDepth, setSimLpDepth] = useState(4.03e6)
-  const [simCexFloat, setSimCexFloat] = useState(87e12)
+  const defaults = TOKEN_DEFAULTS.SHIB
+  const [liveBreeder, setLiveBreeder] = useState(defaults.breeder)
+  const [livePrice, setLivePrice] = useState(defaults.price)
+  const [liveLpDepth, setLiveLpDepth] = useState(defaults.lp)
+  const [liveCexFloat, setLiveCexFloat] = useState(defaults.cex)
+  const [circ, setCirc] = useState(defaults.circ)
+  const [tokenLogo, setTokenLogo] = useState(defaults.logo)
+
+  const [simBreeder, setSimBreeder] = useState(defaults.breeder)
+  const [simPrice, setSimPrice] = useState(defaults.price)
+  const [simLpDepth, setSimLpDepth] = useState(defaults.lp)
+  const [simCexFloat, setSimCexFloat] = useState(defaults.cex)
   const [dirty, setDirty] = useState({ breeder: false, price: false, lp: false, cex: false })
   const dirtyRef = useRef(dirty)
   useEffect(() => {
     dirtyRef.current = dirty
   }, [dirty])
+
+  const applyTokenLive = useCallback((symbol, payload, { resetDirty }) => {
+    setLiveBreeder(payload.breeder)
+    setLivePrice(payload.price)
+    setLiveLpDepth(payload.lp)
+    setLiveCexFloat(payload.cex)
+    setCirc(payload.circ)
+    setTokenLogo(payload.logo)
+    if (resetDirty) {
+      setSimBreeder(payload.breeder)
+      setSimPrice(payload.price)
+      setSimLpDepth(payload.lp)
+      setSimCexFloat(payload.cex)
+      setDirty({ breeder: false, price: false, lp: false, cex: false })
+    } else {
+      const d = dirtyRef.current
+      if (!d.breeder) setSimBreeder(payload.breeder)
+      if (!d.price) setSimPrice(payload.price)
+      if (!d.lp) setSimLpDepth(payload.lp)
+      if (!d.cex) setSimCexFloat(payload.cex)
+    }
+  }, [])
 
   const markDirty = (key) => setDirty((d) => ({ ...d, [key]: true }))
 
@@ -669,14 +802,6 @@ export default function GravityPage() {
     setDirty((d) => ({ ...d, [key]: false }))
   }
 
-  const resetAll = () => {
-    setSimBreeder(liveBreeder)
-    setSimPrice(livePrice)
-    setSimLpDepth(liveLpDepth)
-    setSimCexFloat(liveCexFloat)
-    setDirty({ breeder: false, price: false, lp: false, cex: false })
-  }
-
   const load = useCallback(async () => {
     setLoading(true)
     setErr('')
@@ -684,34 +809,15 @@ export default function GravityPage() {
       const r = await fetch('/api/gravity')
       const j = await r.json()
       setLive(j)
-
-      const breeder = Number.isFinite(j.breederShib) ? j.breederShib : null
-      const price = Number.isFinite(j.shibPriceUsd) ? j.shibPriceUsd : null
-      const lp = Number.isFinite(j.ethDexLpUsdFallback) ? j.ethDexLpUsdFallback : null
-      const cex = Number.isFinite(j.cexFloatFallback) ? j.cexFloatFallback : null
-      const circVal = Number.isFinite(j.circFallback) ? j.circFallback : null
-
-      // Always refresh live snapshots
-      if (breeder != null) setLiveBreeder(breeder)
-      if (price != null) setLivePrice(price)
-      if (lp != null) setLiveLpDepth(lp)
-      if (cex != null) setLiveCexFloat(cex)
-      if (circVal != null) setCirc(circVal)
-
-      // Sync sims only when that field is still live-tracking
-      const d = dirtyRef.current
-      if (breeder != null && !d.breeder) setSimBreeder(breeder)
-      if (price != null && !d.price) setSimPrice(price)
-      if (lp != null && !d.lp) setSimLpDepth(lp)
-      if (cex != null && !d.cex) setSimCexFloat(cex)
-
+      const payload = pickTokenPayload(j, token)
+      applyTokenLive(token, payload, { resetDirty: false })
       if (!j.ok) setErr(j.error || j.note || 'Live read degraded')
     } catch (e) {
       setErr(String(e.message || e))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [token, applyTokenLive])
 
   useEffect(() => {
     load()
@@ -719,290 +825,460 @@ export default function GravityPage() {
     return () => clearInterval(id)
   }, [load])
 
-  const effectiveShib = simBreeder
-  const isFullyLive = !dirty.breeder && !dirty.price && !dirty.lp && !dirty.cex
-  const pctCirc = circ > 0 ? effectiveShib / circ : 0
-  const usd = effectiveShib * simPrice
+  const onTokenChange = (sym) => {
+    setToken(sym)
+    const payload = pickTokenPayload(live, sym)
+    applyTokenLive(sym, payload, { resetDirty: true })
+  }
+
+  const openSingle = (sym) => {
+    setMode('single')
+    onTokenChange(sym)
+  }
+
+  const effective = simBreeder
+  const pctCirc = circ > 0 ? effective / circ : 0
+  const usd = effective * simPrice
   const depthMultiple = simLpDepth > 0 ? usd / simLpDepth : 0
-  const cexPressured = simCexFloat > 0 ? effectiveShib / simCexFloat : 0
+  const cexPressured = simCexFloat > 0 ? effective / simCexFloat : 0
   const band = impactBand({ pctCirc, depthMultiple, cexPressured })
   const margins = useMemo(
     () =>
       marginImpacts({
-        effectiveShib,
-        baselineShib: liveBreeder,
-        shibPrice: simPrice,
+        effective,
+        baseline: liveBreeder,
+        price: simPrice,
         lpDepthUsd: simLpDepth,
         cexFloat: simCexFloat,
         circ
       }),
-    [effectiveShib, liveBreeder, simPrice, simLpDepth, simCexFloat, circ]
+    [effective, liveBreeder, simPrice, simLpDepth, simCexFloat, circ]
   )
   const missions = useMemo(
     () =>
       MISSIONS.map((m) => {
         const target = m.pctCirc * circ
-        const progress = target > 0 ? Math.min(effectiveShib / target, 1) : 0
-        return { ...m, target, progress, gap: Math.max(0, target - effectiveShib), done: progress >= 1 }
+        const progress = target > 0 ? Math.min(effective / target, 1) : 0
+        return { ...m, target, progress, gap: Math.max(0, target - effective), done: progress >= 1 }
       }),
-    [circ, effectiveShib]
+    [circ, effective]
   )
   const activeMission = missions.find((m) => !m.done) || missions[missions.length - 1]
   const breederPctOfCirc = pctCirc * 100
   const cexPctOfCirc = circ > 0 ? (simCexFloat / circ) * 100 : 0
   const otherPct = Math.max(0, 100 - cexPctOfCirc - breederPctOfCirc)
   const dexTone = margins.dexImpactBps > 0.00005 ? 'up' : margins.dexImpactBps < -0.00005 ? 'down' : 'flat'
-  const maxBreeder = MISSIONS[4].pctCirc * circ
+  const maxBreeder = Math.max(MISSIONS[4].pctCirc * circ, liveBreeder * 1.5, 1)
+  const cfg = TOKEN_DEFAULTS[token]
+  const cexMax = Math.max(simCexFloat * 3, circ * 0.5, cfg.cex * 2, 1)
+  const cexMin = Math.max(circ > 0 ? circ * 0.001 : 0, cfg.cex * 0.01, 1e-6)
+  const lpMax = Math.max(simLpDepth * 5, cfg.lp * 5, 1e6)
+  const lpMin = Math.max(cfg.lp * 0.01, 100)
+
+  const mixedRows = useMemo(() => {
+    return TOKEN_SYMBOLS.map((sym) => {
+      const p = pickTokenPayload(live, sym)
+      const zg = p.cex > 0 ? p.breeder / p.cex : 0
+      const pct = p.circ > 0 ? p.breeder / p.circ : 0
+      const k5 = p.circ * 0.1
+      const k5Prog = k5 > 0 ? Math.min(p.breeder / k5, 1) : 0
+      return {
+        symbol: sym,
+        logo: p.logo,
+        breeder: p.breeder,
+        price: p.price,
+        circ: p.circ,
+        cex: p.cex,
+        zg,
+        pct,
+        k5Prog,
+        k5Done: k5Prog >= 1,
+        breederUsd: p.breeder * p.price,
+        cexUsd: p.cex * p.price
+      }
+    })
+  }, [live])
+
+  const mixedSummary = useMemo(() => {
+    const ewZg = mixedRows.reduce((s, r) => s + r.zg, 0) / Math.max(1, mixedRows.length)
+    const sumBreederUsd = mixedRows.reduce((s, r) => s + r.breederUsd, 0)
+    const sumCexUsd = mixedRows.reduce((s, r) => s + r.cexUsd, 0)
+    const usdZg = sumCexUsd > 0 ? sumBreederUsd / sumCexUsd : 0
+    const missionsCleared = mixedRows.filter((r) => r.k5Done).length
+    const meanPct = mixedRows.reduce((s, r) => s + r.pct, 0) / Math.max(1, mixedRows.length)
+    return { ewZg, usdZg, missionsCleared, fedTvl: sumBreederUsd, meanPct }
+  }, [mixedRows])
 
   return (
     <App>
       <Head>
         <title>Zero-Gravity Indicator | KumaDex</title>
-        <meta name="description" content="Zero-Gravity Indicator — Breeder SHIB vs CEX float, mission phases K1–K5. v = √(2GM/r)." />
+        <meta
+          name="description"
+          content="Zero-Gravity — Breeder meme singles vs CEX float marketshare. SHIB LEASH AKITA ELON + Mixed federation. v = √(2GM/r)."
+        />
       </Head>
       <Header />
       <Main>
         <Page>
-{err && <Warn>{err}</Warn>}
+          {err && <Warn>{err}</Warn>}
 
           <Dash>
             <HeadRow id="zg-title">
               <Title>
-                Zero-Gravity Indicator
+                {mode === 'mixed' ? 'Zero-Gravity Mixed' : 'Zero-Gravity Indicator'}
                 <Formula>v = √(2GM/r)</Formula>
               </Title>
               <Sub>
-                Mission phases track Breeder SHIB circ share reclaiming deep liquidity from CEX / institutional books.
+                {mode === 'mixed'
+                  ? 'Federation view — equal- and USD-weighted Breeder vs CEX marketshare across SHIB, LEASH, AKITA, ELON.'
+                  : `Mission phases track Breeder ${token} circ share reclaiming deep liquidity from CEX / institutional books.`}
               </Sub>
+              <ModeToggle>
+                <Btn type="button" $active={mode === 'single'} onClick={() => setMode('single')}>
+                  Single
+                </Btn>
+                <Btn type="button" $active={mode === 'mixed'} onClick={() => setMode('mixed')}>
+                  Mixed
+                </Btn>
+              </ModeToggle>
             </HeadRow>
 
-            <Body>
-              <Compare id="zg-compare">
-                <Side>
-                  <SideTitle>
-                    <Icon src="/gravity/kuma.png" alt="" />
-                    Breeder
-                  </SideTitle>
-                  <SideStat>
-                    <span>Supply</span>
-                    {fmtShib(effectiveShib)} SHIB
-                  </SideStat>
-                  <SideStat>
-                    <span>TVL</span>
-                    {fmtUsd(usd)}
-                  </SideStat>
-                </Side>
-                <Vs>VS</Vs>
-                <Side>
-                  <SideTitle>
-                    <Icon src="/gravity/shib.png" alt="" />
-                    CEX float
-                  </SideTitle>
-                  <SideStat>
-                    <span>Supply</span>
-                    {fmtShib(simCexFloat)} SHIB
-                  </SideStat>
-                  <SideStat>
-                    <span>TVL</span>
-                    {fmtUsd(simCexFloat * simPrice)}
-                  </SideStat>
-                </Side>
-              </Compare>
+            {mode === 'single' ? (
+              <Body>
+                <Compare id="zg-compare">
+                  <Side>
+                    <SideTitle>
+                      <Icon src="/gravity/kuma.png" alt="" />
+                      Breeder
+                    </SideTitle>
+                    <SideStat>
+                      <span>Supply</span>
+                      {fmtAmt(effective)} {token}
+                    </SideStat>
+                    <SideStat>
+                      <span>TVL</span>
+                      {fmtUsd(usd)}
+                    </SideStat>
+                  </Side>
+                  <Vs>VS</Vs>
+                  <Side>
+                    <SideTitle>
+                      <Icon src={tokenLogo} alt="" />
+                      CEX float
+                    </SideTitle>
+                    <SideStat>
+                      <span>Supply</span>
+                      {fmtAmt(simCexFloat)} {token}
+                    </SideStat>
+                    <SideStat>
+                      <span>TVL</span>
+                      {fmtUsd(simCexFloat * simPrice)}
+                    </SideStat>
+                  </Side>
+                </Compare>
 
-              <div>
-                <Metrics id="zg-metrics">
+                <CompareTools>
+                  <Label as="div">
+                    <Icon $sm src={tokenLogo} alt="" />
+                    Token
+                  </Label>
+                  <TokenSelect
+                    id="zg-token-select"
+                    value={token}
+                    onChange={(e) => onTokenChange(e.target.value)}
+                    aria-label="Select Breeder meme token"
+                  >
+                    {TOKEN_SYMBOLS.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </TokenSelect>
+                  {loading && <Pill $on={false}>refreshing…</Pill>}
+                </CompareTools>
+
+                <div>
+                  <Metrics id="zg-metrics">
+                    <Tile>
+                      <TileLabel>Δ vs live</TileLabel>
+                      <TileValue $tone={margins.delta >= 0 ? 'up' : 'down'}>
+                        {margins.delta >= 0 ? '+' : ''}
+                        {fmtAmt(margins.delta)}
+                      </TileValue>
+                      <TileHint>{fmtUsd(margins.deltaUsd)}</TileHint>
+                    </Tile>
+                    <Tile>
+                      <TileLabel>DEX mid move</TileLabel>
+                      <TileValue $tone={dexTone}>{fmtMovePct(margins.dexImpactBps)}</TileValue>
+                      <TileHint>~{fmtUsd(margins.illustrativeMidMoveUsd)}/{token}</TileHint>
+                    </Tile>
+                    <Tile id="zg-zero-tile">
+                      <TileLabel>Zero-Gravity</TileLabel>
+                      <TileValue>{fmtPct(margins.floatShare, 2)}</TileValue>
+                      <TileHint>
+                        vs CEX books · Δ {fmtMovePct(margins.deltaVsFloat, 2)}
+                      </TileHint>
+                    </Tile>
+                    <Tile>
+                      <TileLabel>Co-dom gap</TileLabel>
+                      <TileValue>{fmtAmt(margins.coDomGap)}</TileValue>
+                      <TileHint>
+                        to K5 · {fmtPct(margins.coDomGapPct, 2)} circ · books {fmtPct(margins.booksShare, 1)}
+                      </TileHint>
+                    </Tile>
+                    <Tile>
+                      <TileLabel>Depth ×</TileLabel>
+                      <TileValue>{margins.depthMultiple.toFixed(2)}×</TileValue>
+                      <TileHint>vs ETH {token} LP</TileHint>
+                    </Tile>
+                    <Tile>
+                      <TileLabel>√(2GM/r)</TileLabel>
+                      <TileValue>{margins.vNorm.toFixed(4)}</TileValue>
+                      <TileHint>{band}</TileHint>
+                    </Tile>
+                  </Metrics>
+                  <div style={{ marginTop: 8 }}>
+                    <Stack>
+                      <Seg $pct={breederPctOfCirc} $color="#ff8502" />
+                      <Seg $pct={cexPctOfCirc} $color="#fc72ff" />
+                      <Seg $pct={otherPct} $color="#2a3145" />
+                    </Stack>
+                  </div>
+                </div>
+
+                <BottomStack>
+                  <Controls id="zg-controls">
+                    <Field $live={!dirty.breeder}>
+                      <FieldTop>
+                        <Label>
+                          <Icon src="/gravity/kuma.png" alt="" />
+                          Breeder {token}
+                          <LiveTag $on={!dirty.breeder}>{dirty.breeder ? 'SIM' : 'LIVE'}</LiveTag>
+                        </Label>
+                        <ResetOne type="button" disabled={!dirty.breeder} onClick={() => resetField('breeder')}>
+                          Reset live
+                        </ResetOne>
+                      </FieldTop>
+                      <Range
+                        type="range"
+                        $icon="/gravity/kuma.png"
+                        $border="#ff8502"
+                        min={0}
+                        max={maxBreeder}
+                        step={maxBreeder / 1000 || 1}
+                        value={Math.min(simBreeder, maxBreeder)}
+                        onChange={(e) => {
+                          markDirty('breeder')
+                          setSimBreeder(Number(e.target.value))
+                        }}
+                      />
+                      <Values>
+                        {fmtAmt(simBreeder)} · {fmtPct(pctCirc, 2)} · live {fmtAmt(liveBreeder)}
+                      </Values>
+                    </Field>
+
+                    <Field $live={!dirty.price}>
+                      <FieldTop>
+                        <Label>
+                          <Icon src={tokenLogo} alt="" />
+                          Price
+                          <LiveTag $on={!dirty.price}>{dirty.price ? 'SIM' : 'LIVE'}</LiveTag>
+                        </Label>
+                        <ResetOne type="button" disabled={!dirty.price} onClick={() => resetField('price')}>
+                          Reset live
+                        </ResetOne>
+                      </FieldTop>
+                      <Range
+                        type="range"
+                        $icon={tokenLogo}
+                        $border="#fc72ff"
+                        min={cfg.priceMin}
+                        max={Math.max(cfg.priceMax, livePrice * 5, simPrice * 2)}
+                        step={cfg.priceStep}
+                        value={simPrice}
+                        onChange={(e) => {
+                          markDirty('price')
+                          setSimPrice(Number(e.target.value))
+                        }}
+                      />
+                      <Values>
+                        {fmtPrice(simPrice)} · live {fmtPrice(livePrice)}
+                      </Values>
+                    </Field>
+
+                    <Field $live={!dirty.lp}>
+                      <FieldTop>
+                        <Label>
+                          <Icon src={tokenLogo} alt="" />
+                          LP depth
+                          <LiveTag $on={!dirty.lp}>{dirty.lp ? 'SIM' : 'LIVE'}</LiveTag>
+                        </Label>
+                        <ResetOne type="button" disabled={!dirty.lp} onClick={() => resetField('lp')}>
+                          Reset live
+                        </ResetOne>
+                      </FieldTop>
+                      <Range
+                        type="range"
+                        $icon={tokenLogo}
+                        $border="#fc72ff"
+                        min={lpMin}
+                        max={lpMax}
+                        step={lpMax / 500 || 100}
+                        value={Math.min(Math.max(simLpDepth, lpMin), lpMax)}
+                        onChange={(e) => {
+                          markDirty('lp')
+                          setSimLpDepth(Number(e.target.value))
+                        }}
+                      />
+                      <Values>
+                        {fmtUsd(simLpDepth)} · {depthMultiple.toFixed(1)}× · live {fmtUsd(liveLpDepth)}
+                      </Values>
+                    </Field>
+
+                    <Field $live={!dirty.cex}>
+                      <FieldTop>
+                        <Label>
+                          <Icon src={tokenLogo} alt="" />
+                          CEX float
+                          <LiveTag $on={!dirty.cex}>{dirty.cex ? 'SIM' : 'LIVE'}</LiveTag>
+                        </Label>
+                        <ResetOne type="button" disabled={!dirty.cex} onClick={() => resetField('cex')}>
+                          Reset live
+                        </ResetOne>
+                      </FieldTop>
+                      <Range
+                        type="range"
+                        $icon={tokenLogo}
+                        $border="#fc72ff"
+                        min={cexMin}
+                        max={cexMax}
+                        step={cexMax / 500 || 1}
+                        value={Math.min(Math.max(simCexFloat, cexMin), cexMax)}
+                        onChange={(e) => {
+                          markDirty('cex')
+                          setSimCexFloat(Number(e.target.value))
+                        }}
+                      />
+                      <Values>
+                        {fmtAmt(simCexFloat)} · {fmtPct(cexPressured, 2)} · live {fmtAmt(liveCexFloat)}
+                      </Values>
+                    </Field>
+                  </Controls>
+
+                  <Missions id="zg-missions">
+                    {missions.map((m) => (
+                      <Mission
+                        key={m.id}
+                        type="button"
+                        $active={activeMission.id === m.id}
+                        $done={m.done}
+                        onClick={() => {
+                          markDirty('breeder')
+                          setSimBreeder(m.pctCirc * circ)
+                        }}
+                        title={m.blurb}
+                      >
+                        <MissionId>
+                          {m.id} · {m.code}
+                        </MissionId>
+                        <MissionTitle>{m.title}</MissionTitle>
+                        <MissionPct>
+                          {(m.pctCirc * 100).toFixed(2)}% circ · {(m.progress * 100).toFixed(2)}%
+                          {!m.done ? ` · gap ${fmtAmt(m.gap)}` : ' · cleared'}
+                        </MissionPct>
+                        <Track>
+                          <Fill $pct={m.progress * 100} $done={m.done} />
+                        </Track>
+                      </Mission>
+                    ))}
+                  </Missions>
+                </BottomStack>
+              </Body>
+            ) : (
+              <Body>
+                <Metrics>
                   <Tile>
-                    <TileLabel>Δ vs live</TileLabel>
-                    <TileValue $tone={margins.deltaShib >= 0 ? 'up' : 'down'}>
-                      {margins.deltaShib >= 0 ? '+' : ''}
-                      {fmtShib(margins.deltaShib)}
+                    <TileLabel>Equal-weight ZG</TileLabel>
+                    <TileValue>{fmtPct(mixedSummary.ewZg, 2)}</TileValue>
+                    <TileHint>mean of 4 Zero-Gravity ratios</TileHint>
+                  </Tile>
+                  <Tile>
+                    <TileLabel>USD-weighted ZG</TileLabel>
+                    <TileValue>{fmtPct(mixedSummary.usdZg, 2)}</TileValue>
+                    <TileHint>Σ Breeder USD / Σ CEX float USD</TileHint>
+                  </Tile>
+                  <Tile>
+                    <TileLabel>Missions cleared</TileLabel>
+                    <TileValue>
+                      {mixedSummary.missionsCleared}/4
                     </TileValue>
-                    <TileHint>{fmtUsd(margins.deltaUsd)}</TileHint>
+                    <TileHint>tokens at K5 (10% circ)</TileHint>
                   </Tile>
                   <Tile>
-                    <TileLabel>DEX mid move</TileLabel>
-                    <TileValue $tone={dexTone}>{fmtMovePct(margins.dexImpactBps)}</TileValue>
-                    <TileHint>~{fmtUsd(margins.illustrativeMidMoveUsd)}/SHIB</TileHint>
-                  </Tile>
-                  <Tile id="zg-zero-tile">
-                    <TileLabel>Zero-Gravity</TileLabel>
-                    <TileValue>{fmtPct(margins.floatShare, 2)}</TileValue>
-                    <TileHint>
-                      Δ {fmtMovePct(margins.deltaVsFloat, 2)} vs live
-                    </TileHint>
+                    <TileLabel>Federation TVL</TileLabel>
+                    <TileValue>{fmtUsd(mixedSummary.fedTvl)}</TileValue>
+                    <TileHint>Σ Breeder × price</TileHint>
                   </Tile>
                   <Tile>
-                    <TileLabel>Depth ×</TileLabel>
-                    <TileValue>{margins.depthMultiple.toFixed(2)}×</TileValue>
-                    <TileHint>vs ETH SHIB LP</TileHint>
+                    <TileLabel>Mean circ %</TileLabel>
+                    <TileValue>{fmtPct(mixedSummary.meanPct, 3)}</TileValue>
+                    <TileHint>federation co-dominance path</TileHint>
                   </Tile>
                   <Tile>
-                    <TileLabel>√(2GM/r)</TileLabel>
-                    <TileValue>{margins.vNorm.toFixed(4)}</TileValue>
-                    <TileHint>{band}</TileHint>
+                    <TileLabel>Fed progress</TileLabel>
+                    <TileValue>{fmtPct(Math.min(1, mixedSummary.ewZg), 1)}</TileValue>
+                    <TileHint>vs ZG parity (1.0)</TileHint>
                   </Tile>
                 </Metrics>
-                <div style={{ marginTop: 8 }}>
-                  <Stack>
-                    <Seg $pct={breederPctOfCirc} $color="#ff8502" />
-                    <Seg $pct={cexPctOfCirc} $color="#fc72ff" />
-                    <Seg $pct={otherPct} $color="#2a3145" />
-                  </Stack>
+
+                <div style={{ marginTop: 4 }}>
+                  <MiniBar style={{ height: 6, maxWidth: 480, margin: '0 auto' }}>
+                    <MiniFill $pct={Math.min(100, mixedSummary.meanPct * 1000)} $done={mixedSummary.meanPct >= 0.1} />
+                  </MiniBar>
+                  <Foot style={{ marginTop: 6 }}>Equal-weight mission bar → federation co-dominance (mean circ% toward 10%)</Foot>
                 </div>
-              </div>
 
-              <BottomStack>
-              <Controls id="zg-controls">
-                <Field $live={!dirty.breeder}>
-                  <FieldTop>
-                    <Label>
-                      <Icon src="/gravity/kuma.png" alt="" />
-                      Breeder SHIB
-                      <LiveTag $on={!dirty.breeder}>{dirty.breeder ? 'SIM' : 'LIVE'}</LiveTag>
-                    </Label>
-                    <ResetOne type="button" disabled={!dirty.breeder} onClick={() => resetField('breeder')}>
-                      Reset live
-                    </ResetOne>
-                  </FieldTop>
-                  <Range
-                    type="range"
-                    $icon="/gravity/kuma.png"
-                    $border="#ff8502"
-                    min={0}
-                    max={maxBreeder}
-                    step={maxBreeder / 1000}
-                    value={Math.min(simBreeder, maxBreeder)}
-                    onChange={(e) => {
-                      markDirty('breeder')
-                      setSimBreeder(Number(e.target.value))
-                    }}
-                  />
-                  <Values>
-                    {fmtShib(simBreeder)} · {fmtPct(pctCirc, 2)} · live {fmtShib(liveBreeder)}
-                  </Values>
-                </Field>
-
-                <Field $live={!dirty.price}>
-                  <FieldTop>
-                    <Label>
-                      <Icon src="/gravity/shib.png" alt="" />
-                      Price
-                      <LiveTag $on={!dirty.price}>{dirty.price ? 'SIM' : 'LIVE'}</LiveTag>
-                    </Label>
-                    <ResetOne type="button" disabled={!dirty.price} onClick={() => resetField('price')}>
-                      Reset live
-                    </ResetOne>
-                  </FieldTop>
-                  <Range
-                    type="range"
-                    $icon="/gravity/shib.png"
-                    $border="#fc72ff"
-                    min={1e-7}
-                    max={5e-5}
-                    step={1e-7}
-                    value={simPrice}
-                    onChange={(e) => {
-                      markDirty('price')
-                      setSimPrice(Number(e.target.value))
-                    }}
-                  />
-                  <Values>
-                    ${simPrice.toExponential(2)} · live ${livePrice.toExponential(2)}
-                  </Values>
-                </Field>
-
-                <Field $live={!dirty.lp}>
-                  <FieldTop>
-                    <Label>
-                      <Icon src="/gravity/shib.png" alt="" />
-                      LP depth
-                      <LiveTag $on={!dirty.lp}>{dirty.lp ? 'SIM' : 'LIVE'}</LiveTag>
-                    </Label>
-                    <ResetOne type="button" disabled={!dirty.lp} onClick={() => resetField('lp')}>
-                      Reset live
-                    </ResetOne>
-                  </FieldTop>
-                  <Range
-                    type="range"
-                    $icon="/gravity/shib.png"
-                    $border="#fc72ff"
-                    min={1e5}
-                    max={5e7}
-                    step={1e5}
-                    value={simLpDepth}
-                    onChange={(e) => {
-                      markDirty('lp')
-                      setSimLpDepth(Number(e.target.value))
-                    }}
-                  />
-                  <Values>
-                    {fmtUsd(simLpDepth)} · {depthMultiple.toFixed(1)}× · live {fmtUsd(liveLpDepth)}
-                  </Values>
-                </Field>
-
-                <Field $live={!dirty.cex}>
-                  <FieldTop>
-                    <Label>
-                      <Icon src="/gravity/shib.png" alt="" />
-                      CEX float
-                      <LiveTag $on={!dirty.cex}>{dirty.cex ? 'SIM' : 'LIVE'}</LiveTag>
-                    </Label>
-                    <ResetOne type="button" disabled={!dirty.cex} onClick={() => resetField('cex')}>
-                      Reset live
-                    </ResetOne>
-                  </FieldTop>
-                  <Range
-                    type="range"
-                    $icon="/gravity/shib.png"
-                    $border="#fc72ff"
-                    min={1e12}
-                    max={200e12}
-                    step={1e12}
-                    value={simCexFloat}
-                    onChange={(e) => {
-                      markDirty('cex')
-                      setSimCexFloat(Number(e.target.value))
-                    }}
-                  />
-                  <Values>
-                    {fmtShib(simCexFloat)} · {fmtPct(cexPressured, 2)} · live {fmtShib(liveCexFloat)}
-                  </Values>
-                </Field>
-              </Controls>
-
-              <Missions id="zg-missions">
-                {missions.map((m) => (
-                  <Mission
-                    key={m.id}
-                    type="button"
-                    $active={activeMission.id === m.id}
-                    $done={m.done}
-                    onClick={() => {
-                      markDirty('breeder')
-                      setSimBreeder(m.pctCirc * circ)
-                    }}
-                    title={m.blurb}
-                  >
-                    <MissionId>
-                      {m.id} · {m.code}
-                    </MissionId>
-                    <MissionTitle>{m.title}</MissionTitle>
-                    <MissionPct>
-                      {(m.pctCirc * 100).toFixed(2)}% circ · {(m.progress * 100).toFixed(2)}%
-                      {!m.done ? ` · gap ${fmtShib(m.gap)}` : ' · cleared'}
-                    </MissionPct>
-                    <Track>
-                      <Fill $pct={m.progress * 100} $done={m.done} />
-                    </Track>
-                  </Mission>
-                ))}
-              </Missions>
-              </BottomStack>
-            </Body>
+                <MixedRows id="zg-compare">
+                  {mixedRows.map((r) => (
+                    <MixedRow key={r.symbol}>
+                      <MixedSym>
+                        <Icon src={r.logo} alt="" />
+                        {r.symbol}
+                      </MixedSym>
+                      <MixedCell>
+                        <span>Breeder</span>
+                        {fmtAmt(r.breeder)}
+                      </MixedCell>
+                      <MixedCell>
+                        <span>Zero-Gravity</span>
+                        {fmtPct(r.zg, 2)}
+                      </MixedCell>
+                      <MixedCell>
+                        <span>% circ</span>
+                        {fmtPct(r.pct, 3)}
+                      </MixedCell>
+                      <MixedCell>
+                        <span>K5 progress</span>
+                        {(r.k5Prog * 100).toFixed(1)}%{r.k5Done ? ' · cleared' : ''}
+                        <MiniBar>
+                          <MiniFill $pct={r.k5Prog * 100} $done={r.k5Done} />
+                        </MiniBar>
+                      </MixedCell>
+                      <Btn type="button" onClick={() => openSingle(r.symbol)}>
+                        Open Single
+                      </Btn>
+                    </MixedRow>
+                  ))}
+                </MixedRows>
+              </Body>
+            )}
 
             <Foot>
-              Live snapshots refresh ~60s · {live?.priceSource || '—'} · {live?.priceAsOf || '—'} · circ {fmtShib(circ)} ·
-              fetched {live?.fetchedAt ? new Date(live.fetchedAt).toLocaleTimeString() : '—'}
+              Live snapshots refresh ~60s · {live?.tokens?.[token]?.priceSource || live?.priceSource || '—'} · circ{' '}
+              {fmtAmt(circ)} {token} · books share {fmtPct(margins.booksShare, 1)} · fetched{' '}
+              {live?.fetchedAt ? new Date(live.fetchedAt).toLocaleTimeString() : '—'}
+              {live?.cexFloatNote ? ' · CEX float = estimate' : ''}
             </Foot>
           </Dash>
         </Page>
@@ -1011,7 +1287,7 @@ export default function GravityPage() {
       <CoachMarks
         id="zero-gravity"
         welcomeTitle="Welcome to Zero-Gravity"
-        welcomeDescription="Tour the tools that track Breeder SHIB reclaiming liquidity from CEX books — compare, Zero-Gravity share, sim sliders, and K1–K5 missions."
+        welcomeDescription="Tour Breeder vs CEX books for SHIB, LEASH, AKITA, ELON — Single token missions or Mixed federation co-dominance."
         welcomeLogo="/gravity/kuma.png"
         steps={ZERO_GRAVITY_COACH_STEPS}
       />
