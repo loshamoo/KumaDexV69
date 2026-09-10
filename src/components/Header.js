@@ -831,7 +831,7 @@ const Header = () => {
               closeAllDropdowns();
               setPoolDropdownOpen(newState);
             }}
-            className={poolDropdownOpen || isActive('/breeder') || isActive('/dkuma-breeder') || isActive('/discover') || isActive('/flippening') ? 'open' : ''}
+            className={poolDropdownOpen || isActive('/breeder') || isActive('/dkuma-breeder') || isActive('/discover') || isActive('/flippening') || isActive('/meme-liquidity') ? 'open' : ''}
           >
             Pool
           </MoreButton>
@@ -882,6 +882,17 @@ const Header = () => {
               style={isActive('/flippening') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
             >
               Flippening
+            </DropdownItem>
+            <DropdownItem
+              href="/meme-liquidity"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push('/meme-liquidity');
+                setPoolDropdownOpen(false);
+              }}
+              style={isActive('/meme-liquidity') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
+            >
+              Meme Liquidity
             </DropdownItem>
           </DropdownMenu>
         </DropdownContainer>
