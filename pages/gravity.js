@@ -165,23 +165,27 @@ const Page = styled.div`
 const TokenDD = styled.div`
   position: relative;
   display: inline-flex;
+  align-items: center;
   z-index: 5;
+  flex-shrink: 0;
 `
 
 const TokenDDBtn = styled.button`
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 10px 4px 4px;
+  gap: 5px;
+  padding: 2px 7px 2px 2px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: ${({ theme }) => theme.colors.background.module};
   color: ${({ theme }) => theme.colors.text.primary};
   cursor: pointer;
   font: inherit;
-  font-size: 1.05rem;
+  font-size: 0.78rem;
   font-weight: 600;
+  line-height: 1;
   outline: none;
+  max-width: 148px;
   &:hover,
   &:focus-visible {
     border-color: rgba(252, 114, 255, 0.45);
@@ -192,38 +196,42 @@ const TokenDDMeta = styled.span`
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  line-height: 1.15;
+  line-height: 1.1;
   text-align: left;
+  min-width: 0;
   strong {
-    font-size: 0.95rem;
+    font-size: 0.72rem;
     font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 92px;
   }
   small {
-    font-size: 0.62rem;
+    font-size: 0.55rem;
     font-weight: 600;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
     color: ${({ theme }) => theme.colors.text.tertiary};
   }
 `
 
 const TokenDDChevron = styled.span`
-  font-size: 0.7rem;
+  font-size: 0.58rem;
   color: ${({ theme }) => theme.colors.text.tertiary};
-  margin-left: 2px;
+  flex-shrink: 0;
 `
 
 const TokenDDMenu = styled.div`
   position: absolute;
-  top: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 200px;
-  padding: 6px;
-  border-radius: 12px;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 168px;
+  padding: 4px;
+  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: ${({ theme }) => theme.colors.background.charcoal || theme.colors.background.secondary};
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
   z-index: 20;
 `
 
@@ -231,10 +239,10 @@ const TokenDDItem = styled.button`
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: 8px;
+  padding: 6px 8px;
   border: none;
-  border-radius: 8px;
+  border-radius: 7px;
   background: ${({ $active }) => ($active ? 'rgba(77, 42, 82, 0.55)' : 'transparent')};
   color: ${({ theme }) => theme.colors.text.primary};
   cursor: pointer;
@@ -245,12 +253,12 @@ const TokenDDItem = styled.button`
   }
   strong {
     display: block;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 700;
   }
   small {
     display: block;
-    font-size: 0.68rem;
+    font-size: 0.6rem;
     color: ${({ theme }) => theme.colors.text.tertiary};
   }
 `
@@ -327,10 +335,12 @@ const SideTitle = styled.div`
   align-items: center;
   justify-content: center;
   gap: 8px;
+  flex-wrap: wrap;
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: 1.15rem;
   font-weight: 600;
   margin-bottom: 6px;
+  line-height: 1.2;
 `
 
 const SideStat = styled.div`
@@ -926,7 +936,7 @@ export default function GravityPage() {
                           aria-expanded={tokenMenuOpen}
                           onClick={() => setTokenMenuOpen((o) => !o)}
                         >
-                          <Icon src={tokenLogo} alt="" />
+                          <Icon $sm src={tokenLogo} alt="" />
                           <TokenDDMeta>
                             <strong>{TOKEN_DEFAULTS[token].title}</strong>
                             <small>{token}</small>
@@ -954,6 +964,7 @@ export default function GravityPage() {
                           </TokenDDMenu>
                         )}
                       </TokenDD>
+                      CEX Float
                     </SideTitle>
                     <SideStat>
                       <span>Supply</span>
