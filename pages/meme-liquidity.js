@@ -3,68 +3,124 @@ import Head from 'next/head'
 import Header from '../src/components/Header'
 import styled from 'styled-components'
 
-const App = styled.div`
+const AppContainer = styled.div`
   min-height: 100vh;
   background: ${({ theme }) => theme.colors.background.primary};
-  color: #e8e8e8;
 `
-const Main = styled.main`
+
+const MainContent = styled.main`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px 80px;
+  width: 100%;
+
+  @media (max-width: 768px) {
+    padding: 20px 16px 60px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px 12px 48px;
+  }
+`
+
+const PageShell = styled.div`
+  width: 100%;
   max-width: 1000px;
   margin: 0 auto;
-  padding: 32px 20px 80px;
 `
-const H1 = styled.h1`
+
+const HeaderBlock = styled.div`
+  text-align: center;
+  margin-bottom: 28px;
+`
+
+const Title = styled.h1`
+  margin: 0 0 12px;
   font-size: 2rem;
-  font-weight: 800;
-  margin: 0 0 8px;
-  background: linear-gradient(135deg, #f7931a, #e8a847);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.text.primary};
+
+  @media (max-width: 768px) {
+    font-size: 1.65rem;
+  }
 `
+
 const Lead = styled.p`
-  color: #aaa;
-  max-width: 720px;
-  line-height: 1.5;
-  margin-bottom: 24px;
+  margin: 0 auto;
+  max-width: 640px;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: 1rem;
+  line-height: 1.6;
 `
+
 const Card = styled.section`
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 20px;
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: ${({ theme }) => theme.borderRadius.xlarge};
+  padding: 22px;
+  box-shadow: ${({ theme }) => theme.shadows.large};
   margin-bottom: 16px;
 `
-const Big = styled.div`
-  font-size: 2.4rem;
-  font-weight: 800;
-  color: #00d4aa;
-  margin: 8px 0;
+
+const StatLabel = styled.div`
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
 `
+
+const Big = styled.div`
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.secondary};
+  margin: 8px 0 4px;
+`
+
+const Meta = styled.div`
+  color: ${({ theme }) => theme.colors.text.tertiary};
+  font-size: 0.85rem;
+`
+
+const Warn = styled.p`
+  color: ${({ theme }) => theme.colors.warning};
+  font-size: 0.85rem;
+`
+
 const Stack = styled.div`
   display: flex;
   height: 36px;
-  border-radius: 10px;
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
   overflow: hidden;
-  margin: 16px 0 12px;
+  margin: 18px 0 14px;
+  background: ${({ theme }) => theme.colors.background.interactive};
 `
+
 const Seg = styled.div`
   width: ${({ $pct }) => Math.max($pct, $pct > 0 ? 0.15 : 0)}%;
   background: ${({ $color }) => $color};
 `
+
 const Legend = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px 16px;
+  gap: 10px 16px;
+
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
   }
 `
+
 const Item = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 8px;
   font-size: 0.88rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+
+  strong {
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
 `
+
 const Dot = styled.span`
   width: 12px;
   height: 12px;
@@ -73,30 +129,52 @@ const Dot = styled.span`
   margin-top: 3px;
   flex-shrink: 0;
 `
+
+const CardTitle = styled.h2`
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.primary};
+`
+
 const Table = styled.div`
   display: grid;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 0;
 `
+
 const Row = styled.div`
   display: grid;
   grid-template-columns: 1.4fr 1fr 0.7fr;
   gap: 8px;
-  padding: 8px 0;
+  padding: 10px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   font-size: 0.9rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
   }
 `
-const A = styled.a`
-  color: #00d4aa;
+
+const Pct = styled.span`
+  color: ${({ theme }) => theme.colors.secondary};
+  font-weight: 700;
 `
+
+const A = styled.a`
+  color: ${({ theme }) => theme.colors.secondary};
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`
+
 const Foot = styled.p`
   font-size: 0.78rem;
-  color: #777;
-  line-height: 1.45;
-  margin-top: 20px;
+  color: ${({ theme }) => theme.colors.text.tertiary};
+  line-height: 1.5;
+  margin-top: 8px;
 `
 
 function fmtT(n) {
@@ -109,12 +187,12 @@ function fmtPct(n) {
 }
 
 const COLORS = {
-  burned: '#e74c3c',
+  burned: '#FF6871',
   lockedLp: '#c0392b',
-  lpOther: '#f7931a',
-  breeder: '#00d4aa',
-  migrate: '#6c5ce7',
-  rest: '#445566'
+  lpOther: '#ff8502',
+  breeder: '#fc72ff',
+  migrate: '#6C7284',
+  rest: '#2a3145'
 }
 
 export default function MemeLiquidityPage() {
@@ -136,130 +214,131 @@ export default function MemeLiquidityPage() {
   const lockedLp = b?.lockedViaBurnedLp?.pct || 0
   const inLp = b?.inLpTotal?.pct || 0
   const lpMovable = Math.max(0, inLp - lockedLp)
-  const breeder = (b?.breederRaw?.pct || 0) + (b?.breederViaLp?.pct || 0)
-  // avoid double counting breederViaLp that's already in lpMovable — for stack use raw buckets carefully
   const migrate = b?.migrate?.pct || 0
   const permanent = b?.permanentCombined?.pct || 0
   const rest = Math.max(0, 100 - permanent - lpMovable - (b?.breederRaw?.pct || 0) - migrate)
-  // Note: breederViaLp is subset of lpMovable; breederRaw is separate
 
   return (
-    <App>
+    <AppContainer>
       <Head>
         <title>Meme Liquidity | KumaDex</title>
         <meta name="description" content="KUMA V2 supply breakdown: burned, locked via dead LP, Breeder, migrate residual." />
       </Head>
       <Header />
-      <Main>
-        <H1>Meme Liquidity</H1>
-        <Lead>
-          Live labeled view of <strong>KUMA V2</strong> supply: how much is permanently burned, how much is locked behind
-          burned Uni V2 LP, and what remains in Breeder / migrate / wallets. Supporting permanence context for Kuma&apos;s
-          on-chain depth thesis.
-        </Lead>
+      <MainContent>
+        <PageShell>
+          <HeaderBlock>
+            <Title>Meme Liquidity</Title>
+            <Lead>
+              Live labeled view of <strong>KUMA V2</strong> supply: how much is permanently burned, how much is locked behind
+              burned Uni V2 LP, and what remains in Breeder / migrate / wallets. Supporting permanence context for Kuma&apos;s
+              on-chain depth thesis.
+            </Lead>
+          </HeaderBlock>
 
-        <Card>
-          <div style={{ color: '#aaa', fontSize: '0.9rem' }}>Permanently inaccessible (burn + dead LP)</div>
-          <Big>{data ? fmtPct(permanent) : '…'}</Big>
-          <div style={{ color: '#888' }}>
-            of 1 quadrillion KUMA V2
-            {data?.fetchedAt ? ` · as of ${new Date(data.fetchedAt).toLocaleString()}` : ''}
-          </div>
-          {err && <p style={{ color: '#e8a847' }}>{err}</p>}
+          <Card>
+            <StatLabel>Permanently inaccessible (burn + dead LP)</StatLabel>
+            <Big>{data ? fmtPct(permanent) : '…'}</Big>
+            <Meta>
+              of 1 quadrillion KUMA V2
+              {data?.fetchedAt ? ` · as of ${new Date(data.fetchedAt).toLocaleString()}` : ''}
+            </Meta>
+            {err && <Warn>{err}</Warn>}
 
-          <Stack>
-            <Seg $pct={burned} $color={COLORS.burned} title="Raw burn" />
-            <Seg $pct={lockedLp} $color={COLORS.lockedLp} title="Dead LP lock" />
-            <Seg $pct={lpMovable} $color={COLORS.lpOther} title="LP not burned" />
-            <Seg $pct={b?.breederRaw?.pct || 0} $color={COLORS.breeder} title="Breeder raw KUMA" />
-            <Seg $pct={migrate} $color={COLORS.migrate} title="Migrate" />
-            <Seg $pct={rest} $color={COLORS.rest} title="Other wallets" />
-          </Stack>
+            <Stack>
+              <Seg $pct={burned} $color={COLORS.burned} title="Raw burn" />
+              <Seg $pct={lockedLp} $color={COLORS.lockedLp} title="Dead LP lock" />
+              <Seg $pct={lpMovable} $color={COLORS.lpOther} title="LP not burned" />
+              <Seg $pct={b?.breederRaw?.pct || 0} $color={COLORS.breeder} title="Breeder raw KUMA" />
+              <Seg $pct={migrate} $color={COLORS.migrate} title="Migrate" />
+              <Seg $pct={rest} $color={COLORS.rest} title="Other wallets" />
+            </Stack>
 
-          <Legend>
-            <Item>
-              <Dot $color={COLORS.burned} />
-              <span>
-                <strong>Burned at 0xdead</strong> — {fmtPct(burned)} (~{fmtT(b?.burnedRaw?.human)} KUMA)
-              </span>
-            </Item>
-            <Item>
-              <Dot $color={COLORS.lockedLp} />
-              <span>
-                <strong>Locked via burned LP</strong> — {fmtPct(lockedLp)} (~{fmtT(b?.lockedViaBurnedLp?.human)})
-              </span>
-            </Item>
-            <Item>
-              <Dot $color={COLORS.lpOther} />
-              <span>
-                <strong>In LP (unburned LP shares)</strong> — {fmtPct(lpMovable)}
-              </span>
-            </Item>
-            <Item>
-              <Dot $color={COLORS.breeder} />
-              <span>
-                <strong>Breeder (raw KUMA)</strong> — {fmtPct(b?.breederRaw?.pct)} (+ ~{fmtPct(b?.breederViaLp?.pct)} via
-                LP in Breeder)
-              </span>
-            </Item>
-            <Item>
-              <Dot $color={COLORS.migrate} />
-              <span>
-                <strong>KumaMigrate residual</strong> — {fmtPct(migrate)}
-              </span>
-            </Item>
-            <Item>
-              <Dot $color={COLORS.rest} />
-              <span>
-                <strong>Other wallets / unlabeled</strong> — ~{fmtPct(rest)}
-              </span>
-            </Item>
-          </Legend>
-        </Card>
+            <Legend>
+              <Item>
+                <Dot $color={COLORS.burned} />
+                <span>
+                  <strong>Burned at 0xdead</strong> — {fmtPct(burned)} (~{fmtT(b?.burnedRaw?.human)} KUMA)
+                </span>
+              </Item>
+              <Item>
+                <Dot $color={COLORS.lockedLp} />
+                <span>
+                  <strong>Locked via burned LP</strong> — {fmtPct(lockedLp)} (~{fmtT(b?.lockedViaBurnedLp?.human)})
+                </span>
+              </Item>
+              <Item>
+                <Dot $color={COLORS.lpOther} />
+                <span>
+                  <strong>In LP (unburned LP shares)</strong> — {fmtPct(lpMovable)}
+                </span>
+              </Item>
+              <Item>
+                <Dot $color={COLORS.breeder} />
+                <span>
+                  <strong>Breeder (raw KUMA)</strong> — {fmtPct(b?.breederRaw?.pct)} (+ ~{fmtPct(b?.breederViaLp?.pct)} via
+                  LP in Breeder)
+                </span>
+              </Item>
+              <Item>
+                <Dot $color={COLORS.migrate} />
+                <span>
+                  <strong>KumaMigrate residual</strong> — {fmtPct(migrate)}
+                </span>
+              </Item>
+              <Item>
+                <Dot $color={COLORS.rest} />
+                <span>
+                  <strong>Other wallets / unlabeled</strong> — ~{fmtPct(rest)}
+                </span>
+              </Item>
+            </Legend>
+          </Card>
 
-        <Card>
-          <h2 style={{ marginTop: 0, fontSize: '1.1rem' }}>Labeled breakdown</h2>
-          <Table>
-            <Row style={{ color: '#888', fontSize: '0.8rem' }}>
-              <span>Bucket</span>
-              <span>Amount</span>
-              <span>% supply</span>
-            </Row>
-            {b &&
-              [
-                b.burnedRaw,
-                b.lockedViaBurnedLp,
-                b.permanentCombined,
-                b.inLpTotal,
-                b.breederRaw,
-                b.breederViaLp,
-                b.migrate,
-                b.ogDeployer,
-                b.gateCex
-              ].map((row) => (
-                <Row key={row.label}>
-                  <span>{row.label}</span>
-                  <span>{fmtT(row.human)} KUMA</span>
-                  <span style={{ color: '#00d4aa', fontWeight: 600 }}>{fmtPct(row.pct)}</span>
-                </Row>
-              ))}
-          </Table>
-        </Card>
+          <Card>
+            <CardTitle>Labeled breakdown</CardTitle>
+            <Table>
+              <Row style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem' }}>
+                <span>Bucket</span>
+                <span>Amount</span>
+                <span>% supply</span>
+              </Row>
+              {b &&
+                [
+                  b.burnedRaw,
+                  b.lockedViaBurnedLp,
+                  b.permanentCombined,
+                  b.inLpTotal,
+                  b.breederRaw,
+                  b.breederViaLp,
+                  b.migrate,
+                  b.ogDeployer,
+                  b.gateCex
+                ].map((row) => (
+                  <Row key={row.label}>
+                    <span>{row.label}</span>
+                    <span>{fmtT(row.human)} KUMA</span>
+                    <Pct>{fmtPct(row.pct)}</Pct>
+                  </Row>
+                ))}
+            </Table>
+          </Card>
 
-        <Foot>
-          KUMA V2{' '}
-          <A href="https://etherscan.io/token/0x48C276e8d03813224bb1e55F953adB6d02FD3E02" target="_blank" rel="noreferrer">
-            0x48C276e8…3E02
-          </A>
-          · Uni V2 LP{' '}
-          <A href="https://etherscan.io/address/0xDF60E6416Fcf8C955FdDF01148753A911F7A5905" target="_blank" rel="noreferrer">
-            0xDF60…5905
-          </A>
-          (~{data?.lp?.deadPct?.toFixed?.(2) || '97.5'}% of LP at 0xdead). Raw burn and dead-LP lock do not overlap.
-          Known CEX row is a lower bound (Gate hot wallet); unlabeled venues omitted. See also{' '}
-          <A href="/flippening">Flippening</A> for Breeder SHIB gravity.
-        </Foot>
-      </Main>
-    </App>
+          <Foot>
+            KUMA V2{' '}
+            <A href="https://etherscan.io/token/0x48C276e8d03813224bb1e55F953adB6d02FD3E02" target="_blank" rel="noreferrer">
+              0x48C276e8…3E02
+            </A>
+            · Uni V2 LP{' '}
+            <A href="https://etherscan.io/address/0xDF60E6416Fcf8C955FdDF01148753A911F7A5905" target="_blank" rel="noreferrer">
+              0xDF60…5905
+            </A>
+            (~{data?.lp?.deadPct?.toFixed?.(2) || '97.5'}% of LP at 0xdead). Raw burn and dead-LP lock do not overlap.
+            Known CEX row is a lower bound (Gate hot wallet); unlabeled venues omitted. See also{' '}
+            <A href="/gravity">Gravity</A> for Breeder SHIB escape velocity.
+          </Foot>
+        </PageShell>
+      </MainContent>
+    </AppContainer>
   )
 }

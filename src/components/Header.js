@@ -941,7 +941,7 @@ const Header = () => {
               closeAllDropdowns();
               setDropdownOpen(newState);
             }}
-            className={dropdownOpen || isActive('/flippening') || isActive('/meme-liquidity') ? 'open' : ''}
+            className={dropdownOpen || isActive('/gravity') || isActive('/meme-liquidity') ? 'open' : ''}
           >
             More
           </MoreButton>
@@ -960,15 +960,15 @@ const Header = () => {
               Addresses
             </DropdownItem>
             <DropdownItem
-              href="/flippening"
+              href="/gravity"
               onClick={(e) => {
                 e.preventDefault();
-                router.push('/flippening');
+                router.push('/gravity');
                 setDropdownOpen(false);
               }}
-              style={isActive('/flippening') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
+              style={isActive('/gravity') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
             >
-              Flippening
+              Gravity
             </DropdownItem>
             <DropdownItem
               href="/meme-liquidity"
