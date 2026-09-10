@@ -831,7 +831,7 @@ const Header = () => {
               closeAllDropdowns();
               setPoolDropdownOpen(newState);
             }}
-            className={poolDropdownOpen || isActive('/breeder') || isActive('/dkuma-breeder') || isActive('/discover') ? 'open' : ''}
+            className={poolDropdownOpen || isActive('/breeder') || isActive('/dkuma-breeder') || isActive('/discover') || isActive('/flippening') ? 'open' : ''}
           >
             Pool
           </MoreButton>
@@ -871,6 +871,17 @@ const Header = () => {
               style={isActive('/dkuma-breeder') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
             >
               dKuma Breeder
+            </DropdownItem>
+            <DropdownItem
+              href="/flippening"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push('/flippening');
+                setPoolDropdownOpen(false);
+              }}
+              style={isActive('/flippening') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
+            >
+              Flippening
             </DropdownItem>
           </DropdownMenu>
         </DropdownContainer>
