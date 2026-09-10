@@ -8,6 +8,7 @@ const TOKEN_SYMBOLS = ['SHIB', 'LEASH', 'AKITA', 'ELON']
 
 const TOKEN_DEFAULTS = {
   SHIB: {
+    title: 'Shiba Inu',
     logo: '/breederlogos/shib.png',
     circ: 589.239e12,
     price: 5.115e-6,
@@ -19,6 +20,7 @@ const TOKEN_DEFAULTS = {
     priceStep: 1e-7
   },
   LEASH: {
+    title: 'Doge Killer',
     logo: '/breederlogos/leash.png',
     circ: 107646,
     price: 4.0,
@@ -30,6 +32,7 @@ const TOKEN_DEFAULTS = {
     priceStep: 0.1
   },
   AKITA: {
+    title: 'Akita Inu',
     logo: '/breederlogos/akita.png',
     circ: 92.18e12,
     price: 4.33e-9,
@@ -41,6 +44,7 @@ const TOKEN_DEFAULTS = {
     priceStep: 1e-11
   },
   ELON: {
+    title: 'Dogelon Mars',
     logo: '/breederlogos/elon.png',
     circ: 1e15,
     price: 3.11e-8,
@@ -77,14 +81,14 @@ const ZERO_GRAVITY_COACH_STEPS = [
     target: '#zg-title',
     title: 'Zero-Gravity Indicator',
     description:
-      'Educational escape-velocity model for Breeder-held meme singles reclaiming liquidity from CEX / institutional books. Toggle Single vs Mixed; pick SHIB / LEASH / AKITA / ELON. Not a price oracle — a mission dashboard.',
+      'Educational escape-velocity model for Breeder-held meme singles reclaiming liquidity from CEX / institutional books. Pick SHIB / LEASH / AKITA / ELON from the CEX-side token menu. Not a price oracle — a mission dashboard.',
     placement: 'bottom'
   },
   {
     target: '#zg-compare',
     title: 'Breeder vs CEX float',
     description:
-      'Left is on-chain Breeder balance (supply + TVL). Right is the assumed CEX / institutional float for the selected token. Use the token dropdown to switch which meme you are measuring.',
+      'Left is on-chain Breeder balance (supply + TVL). Right is the assumed CEX / institutional float. Open the token menu (logo + name) on the CEX side to switch SHIB / LEASH / AKITA / ELON.',
     placement: 'bottom'
   },
   {
@@ -112,7 +116,7 @@ const ZERO_GRAVITY_COACH_STEPS = [
     target: '#zg-missions',
     title: 'Mission phases K1–K5',
     description:
-      'Tap a mission to jump Breeder balance to that circ-marketshare target — Ignition → Co-Dominance (10% circ). Mixed mode blends all four Breeder memes for federation co-dominance.',
+      'Tap a mission to jump Breeder balance to that circ-marketshare target — Ignition → Co-Dominance (10% circ).',
     placement: 'top'
   }
 ]
@@ -158,55 +162,96 @@ const Page = styled.div`
   gap: 10px;
 `
 
-const Pill = styled.span`
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 5px 10px;
-  border-radius: 999px;
-  border: 1px solid ${({ $on, theme }) => ($on ? 'rgba(39,174,96,0.35)' : theme.colors.border.highlight)};
-  color: ${({ $on, theme }) => ($on ? theme.colors.success : theme.colors.secondary)};
-`
-
-const Btn = styled.button`
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 999px;
-  cursor: pointer;
-  border: 1px solid ${({ $primary, $active }) => ($primary || $active ? 'transparent' : 'rgba(255,255,255,0.14)')};
-  background: ${({ $primary, $active }) => ($primary || $active ? '#4d2a52' : 'transparent')};
-  color: ${({ $primary, $active, theme }) => ($primary || $active ? '#fff' : theme.colors.text.secondary)};
-  &:hover:not(:disabled) {
-    background: ${({ $primary, $active }) => ($primary || $active ? '#3f2153' : 'rgba(255,255,255,0.04)')};
-    color: ${({ theme }) => theme.colors.text.primary};
-  }
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-`
-
-const ModeToggle = styled.div`
+const TokenDD = styled.div`
+  position: relative;
   display: inline-flex;
-  gap: 4px;
-  padding: 3px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: ${({ theme }) => theme.colors.background.module};
+  z-index: 5;
 `
 
-const TokenSelect = styled.select`
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 6px 10px;
+const TokenDDBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: ${({ theme }) => theme.colors.background.module};
   color: ${({ theme }) => theme.colors.text.primary};
   cursor: pointer;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
   outline: none;
-  &:focus {
+  &:hover,
+  &:focus-visible {
     border-color: rgba(252, 114, 255, 0.45);
+  }
+`
+
+const TokenDDMeta = styled.span`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+  text-align: left;
+  strong {
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+  small {
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.colors.text.tertiary};
+  }
+`
+
+const TokenDDChevron = styled.span`
+  font-size: 0.7rem;
+  color: ${({ theme }) => theme.colors.text.tertiary};
+  margin-left: 2px;
+`
+
+const TokenDDMenu = styled.div`
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 200px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: ${({ theme }) => theme.colors.background.charcoal || theme.colors.background.secondary};
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  z-index: 20;
+`
+
+const TokenDDItem = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: ${({ $active }) => ($active ? 'rgba(77, 42, 82, 0.55)' : 'transparent')};
+  color: ${({ theme }) => theme.colors.text.primary};
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+  strong {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  small {
+    display: block;
+    font-size: 0.68rem;
+    color: ${({ theme }) => theme.colors.text.tertiary};
   }
 `
 
@@ -314,15 +359,6 @@ const Vs = styled.span`
   font-weight: 700;
   letter-spacing: 0.08em;
   color: ${({ theme }) => theme.colors.text.tertiary};
-`
-
-const CompareTools = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 2px;
 `
 
 const Metrics = styled.div`
@@ -560,62 +596,6 @@ const Foot = styled.div`
   text-align: center;
 `
 
-const MixedRows = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`
-
-const MixedRow = styled.div`
-  display: grid;
-  grid-template-columns: 140px 1fr 1fr 1fr 1.4fr auto;
-  gap: 10px;
-  align-items: center;
-  padding: 10px 12px;
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  background: ${({ theme }) => theme.colors.background.module};
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr 1fr;
-  }
-`
-
-const MixedSym = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.text.primary};
-`
-
-const MixedCell = styled.div`
-  font-size: 0.78rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  span {
-    display: block;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: ${({ theme }) => theme.colors.text.tertiary};
-    margin-bottom: 2px;
-  }
-`
-
-const MiniBar = styled.div`
-  height: 4px;
-  border-radius: 999px;
-  background: ${({ theme }) => theme.colors.background.interactive};
-  overflow: hidden;
-  margin-top: 4px;
-`
-
-const MiniFill = styled.div`
-  height: 100%;
-  width: ${({ $pct }) => Math.min(100, Math.max(0, $pct))}%;
-  background: ${({ $done, theme }) => ($done ? theme.colors.success : theme.colors.secondary)};
-`
-
 function fmtCoef(n, digits = 2) {
   return n.toLocaleString('en-US', {
     minimumFractionDigits: digits,
@@ -746,8 +726,9 @@ function pickTokenPayload(live, symbol) {
 }
 
 export default function GravityPage() {
-  const [mode, setMode] = useState('single') // single | mixed
   const [token, setToken] = useState('SHIB')
+  const [tokenMenuOpen, setTokenMenuOpen] = useState(false)
+  const tokenMenuRef = useRef(null)
   const [live, setLive] = useState(null)
   const [err, setErr] = useState('')
   const [loading, setLoading] = useState(true)
@@ -831,9 +812,27 @@ export default function GravityPage() {
     applyTokenLive(sym, payload, { resetDirty: true })
   }
 
-  const openSingle = (sym) => {
-    setMode('single')
+  useEffect(() => {
+    if (!tokenMenuOpen) return
+    const onDoc = (e) => {
+      if (tokenMenuRef.current && !tokenMenuRef.current.contains(e.target)) {
+        setTokenMenuOpen(false)
+      }
+    }
+    const onKey = (e) => {
+      if (e.key === 'Escape') setTokenMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [tokenMenuOpen])
+
+  const selectToken = (sym) => {
     onTokenChange(sym)
+    setTokenMenuOpen(false)
   }
 
   const effective = simBreeder
@@ -875,39 +874,6 @@ export default function GravityPage() {
   const lpMax = Math.max(simLpDepth * 5, cfg.lp * 5, 1e6)
   const lpMin = Math.max(cfg.lp * 0.01, 100)
 
-  const mixedRows = useMemo(() => {
-    return TOKEN_SYMBOLS.map((sym) => {
-      const p = pickTokenPayload(live, sym)
-      const zg = p.cex > 0 ? p.breeder / p.cex : 0
-      const pct = p.circ > 0 ? p.breeder / p.circ : 0
-      const k5 = p.circ * 0.1
-      const k5Prog = k5 > 0 ? Math.min(p.breeder / k5, 1) : 0
-      return {
-        symbol: sym,
-        logo: p.logo,
-        breeder: p.breeder,
-        price: p.price,
-        circ: p.circ,
-        cex: p.cex,
-        zg,
-        pct,
-        k5Prog,
-        k5Done: k5Prog >= 1,
-        breederUsd: p.breeder * p.price,
-        cexUsd: p.cex * p.price
-      }
-    })
-  }, [live])
-
-  const mixedSummary = useMemo(() => {
-    const ewZg = mixedRows.reduce((s, r) => s + r.zg, 0) / Math.max(1, mixedRows.length)
-    const sumBreederUsd = mixedRows.reduce((s, r) => s + r.breederUsd, 0)
-    const sumCexUsd = mixedRows.reduce((s, r) => s + r.cexUsd, 0)
-    const usdZg = sumCexUsd > 0 ? sumBreederUsd / sumCexUsd : 0
-    const missionsCleared = mixedRows.filter((r) => r.k5Done).length
-    const meanPct = mixedRows.reduce((s, r) => s + r.pct, 0) / Math.max(1, mixedRows.length)
-    return { ewZg, usdZg, missionsCleared, fedTvl: sumBreederUsd, meanPct }
-  }, [mixedRows])
 
   return (
     <App>
@@ -915,7 +881,7 @@ export default function GravityPage() {
         <title>Zero-Gravity Indicator | KumaDex</title>
         <meta
           name="description"
-          content="Zero-Gravity — Breeder meme singles vs CEX float marketshare. SHIB LEASH AKITA ELON + Mixed federation. v = √(2GM/r)."
+          content="Zero-Gravity — Breeder meme singles vs CEX float marketshare. SHIB LEASH AKITA ELON. v = √(2GM/r)."
         />
       </Head>
       <Header />
@@ -926,25 +892,14 @@ export default function GravityPage() {
           <Dash>
             <HeadRow id="zg-title">
               <Title>
-                {mode === 'mixed' ? 'Zero-Gravity Mixed' : 'Zero-Gravity Indicator'}
+                Zero-Gravity Indicator
                 <Formula>v = √(2GM/r)</Formula>
               </Title>
               <Sub>
-                {mode === 'mixed'
-                  ? 'Federation view — equal- and USD-weighted Breeder vs CEX marketshare across SHIB, LEASH, AKITA, ELON.'
-                  : `Mission phases track Breeder ${token} circ share reclaiming deep liquidity from CEX / institutional books.`}
+                {`Mission phases track Breeder ${token} circ share reclaiming deep liquidity from CEX / institutional books.`}
               </Sub>
-              <ModeToggle>
-                <Btn type="button" $active={mode === 'single'} onClick={() => setMode('single')}>
-                  Single
-                </Btn>
-                <Btn type="button" $active={mode === 'mixed'} onClick={() => setMode('mixed')}>
-                  Mixed
-                </Btn>
-              </ModeToggle>
             </HeadRow>
 
-            {mode === 'single' ? (
               <Body>
                 <Compare id="zg-compare">
                   <Side>
@@ -964,8 +919,41 @@ export default function GravityPage() {
                   <Vs>VS</Vs>
                   <Side>
                     <SideTitle>
-                      <Icon src={tokenLogo} alt="" />
-                      CEX float
+                      <TokenDD ref={tokenMenuRef} id="zg-token-select">
+                        <TokenDDBtn
+                          type="button"
+                          aria-haspopup="listbox"
+                          aria-expanded={tokenMenuOpen}
+                          onClick={() => setTokenMenuOpen((o) => !o)}
+                        >
+                          <Icon src={tokenLogo} alt="" />
+                          <TokenDDMeta>
+                            <strong>{TOKEN_DEFAULTS[token].title}</strong>
+                            <small>{token}</small>
+                          </TokenDDMeta>
+                          <TokenDDChevron>{tokenMenuOpen ? '▴' : '▾'}</TokenDDChevron>
+                        </TokenDDBtn>
+                        {tokenMenuOpen && (
+                          <TokenDDMenu role="listbox" aria-label="Compare token">
+                            {TOKEN_SYMBOLS.map((s) => (
+                              <TokenDDItem
+                                key={s}
+                                type="button"
+                                role="option"
+                                $active={s === token}
+                                aria-selected={s === token}
+                                onClick={() => selectToken(s)}
+                              >
+                                <Icon $sm src={TOKEN_DEFAULTS[s].logo} alt="" />
+                                <span>
+                                  <strong>{s}</strong>
+                                  <small>{TOKEN_DEFAULTS[s].title}</small>
+                                </span>
+                              </TokenDDItem>
+                            ))}
+                          </TokenDDMenu>
+                        )}
+                      </TokenDD>
                     </SideTitle>
                     <SideStat>
                       <span>Supply</span>
@@ -977,26 +965,6 @@ export default function GravityPage() {
                     </SideStat>
                   </Side>
                 </Compare>
-
-                <CompareTools>
-                  <Label as="div">
-                    <Icon $sm src={tokenLogo} alt="" />
-                    Token
-                  </Label>
-                  <TokenSelect
-                    id="zg-token-select"
-                    value={token}
-                    onChange={(e) => onTokenChange(e.target.value)}
-                    aria-label="Select Breeder meme token"
-                  >
-                    {TOKEN_SYMBOLS.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </TokenSelect>
-                  {loading && <Pill $on={false}>refreshing…</Pill>}
-                </CompareTools>
 
                 <div>
                   <Metrics id="zg-metrics">
@@ -1195,87 +1163,9 @@ export default function GravityPage() {
                   </Missions>
                 </BottomStack>
               </Body>
-            ) : (
-              <Body>
-                <Metrics>
-                  <Tile>
-                    <TileLabel>Equal-weight ZG</TileLabel>
-                    <TileValue>{fmtPct(mixedSummary.ewZg, 2)}</TileValue>
-                    <TileHint>mean of 4 Zero-Gravity ratios</TileHint>
-                  </Tile>
-                  <Tile>
-                    <TileLabel>USD-weighted ZG</TileLabel>
-                    <TileValue>{fmtPct(mixedSummary.usdZg, 2)}</TileValue>
-                    <TileHint>Σ Breeder USD / Σ CEX float USD</TileHint>
-                  </Tile>
-                  <Tile>
-                    <TileLabel>Missions cleared</TileLabel>
-                    <TileValue>
-                      {mixedSummary.missionsCleared}/4
-                    </TileValue>
-                    <TileHint>tokens at K5 (10% circ)</TileHint>
-                  </Tile>
-                  <Tile>
-                    <TileLabel>Federation TVL</TileLabel>
-                    <TileValue>{fmtUsd(mixedSummary.fedTvl)}</TileValue>
-                    <TileHint>Σ Breeder × price</TileHint>
-                  </Tile>
-                  <Tile>
-                    <TileLabel>Mean circ %</TileLabel>
-                    <TileValue>{fmtPct(mixedSummary.meanPct, 3)}</TileValue>
-                    <TileHint>federation co-dominance path</TileHint>
-                  </Tile>
-                  <Tile>
-                    <TileLabel>Fed progress</TileLabel>
-                    <TileValue>{fmtPct(Math.min(1, mixedSummary.ewZg), 1)}</TileValue>
-                    <TileHint>vs ZG parity (1.0)</TileHint>
-                  </Tile>
-                </Metrics>
-
-                <div style={{ marginTop: 4 }}>
-                  <MiniBar style={{ height: 6, maxWidth: 480, margin: '0 auto' }}>
-                    <MiniFill $pct={Math.min(100, mixedSummary.meanPct * 1000)} $done={mixedSummary.meanPct >= 0.1} />
-                  </MiniBar>
-                  <Foot style={{ marginTop: 6 }}>Equal-weight mission bar → federation co-dominance (mean circ% toward 10%)</Foot>
-                </div>
-
-                <MixedRows id="zg-compare">
-                  {mixedRows.map((r) => (
-                    <MixedRow key={r.symbol}>
-                      <MixedSym>
-                        <Icon src={r.logo} alt="" />
-                        {r.symbol}
-                      </MixedSym>
-                      <MixedCell>
-                        <span>Breeder</span>
-                        {fmtAmt(r.breeder)}
-                      </MixedCell>
-                      <MixedCell>
-                        <span>Zero-Gravity</span>
-                        {fmtPct(r.zg, 2)}
-                      </MixedCell>
-                      <MixedCell>
-                        <span>% circ</span>
-                        {fmtPct(r.pct, 3)}
-                      </MixedCell>
-                      <MixedCell>
-                        <span>K5 progress</span>
-                        {(r.k5Prog * 100).toFixed(1)}%{r.k5Done ? ' · cleared' : ''}
-                        <MiniBar>
-                          <MiniFill $pct={r.k5Prog * 100} $done={r.k5Done} />
-                        </MiniBar>
-                      </MixedCell>
-                      <Btn type="button" onClick={() => openSingle(r.symbol)}>
-                        Open Single
-                      </Btn>
-                    </MixedRow>
-                  ))}
-                </MixedRows>
-              </Body>
-            )}
 
             <Foot>
-              Live snapshots refresh ~60s · {live?.tokens?.[token]?.priceSource || live?.priceSource || '—'} · circ{' '}
+              Live snapshots refresh ~60s{loading ? ' · refreshing…' : ''} · {live?.tokens?.[token]?.priceSource || live?.priceSource || '—'} · circ{' '}
               {fmtAmt(circ)} {token} · books share {fmtPct(margins.booksShare, 1)} · fetched{' '}
               {live?.fetchedAt ? new Date(live.fetchedAt).toLocaleTimeString() : '—'}
               {live?.cexFloatNote ? ' · CEX float = estimate' : ''}
@@ -1287,7 +1177,7 @@ export default function GravityPage() {
       <CoachMarks
         id="zero-gravity"
         welcomeTitle="Welcome to Zero-Gravity"
-        welcomeDescription="Tour Breeder vs CEX books for SHIB, LEASH, AKITA, ELON — Single token missions or Mixed federation co-dominance."
+        welcomeDescription="Tour Breeder vs CEX books for SHIB, LEASH, AKITA, ELON — switch the token from the CEX-side menu and run K1–K5 missions."
         welcomeLogo="/gravity/kuma.png"
         steps={ZERO_GRAVITY_COACH_STEPS}
       />
