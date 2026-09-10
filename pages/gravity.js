@@ -164,9 +164,9 @@ const Sub = styled.p`
 const Body = styled.div`
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 `
 
 const Compare = styled.div`
@@ -365,6 +365,7 @@ const Missions = styled.div`
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 8px;
+  margin-top: auto;
   flex-shrink: 0;
   @media (max-width: 800px) {
     grid-template-columns: repeat(5, minmax(120px, 1fr));
@@ -501,7 +502,7 @@ function fmtUsd(n) {
   if (a >= 1e3) return sign + '$' + (a / 1e3).toFixed(1) + 'K'
   return sign + '$' + a.toFixed(2)
 }
-function fmtPct(n, d = 4) {
+function fmtPct(n, d = 2) {
   if (!Number.isFinite(n)) return '—'
   return (n * 100).toFixed(d) + '%'
 }
@@ -746,13 +747,13 @@ export default function GravityPage() {
                   </Tile>
                   <Tile>
                     <TileLabel>÷ CEX float</TileLabel>
-                    <TileValue>{fmtPct(margins.floatShare, 4)}</TileValue>
+                    <TileValue>{fmtPct(margins.floatShare, 2)}</TileValue>
                     <TileHint>book control</TileHint>
                   </Tile>
                   <Tile>
                     <TileLabel>Δ float share</TileLabel>
                     <TileValue $tone={margins.deltaVsFloat >= 0 ? 'up' : 'down'}>
-                      {fmtPct(margins.deltaVsFloat, 4)}
+                      {fmtPct(margins.deltaVsFloat, 2)}
                     </TileValue>
                     <TileHint>vs live</TileHint>
                   </Tile>
@@ -802,7 +803,7 @@ export default function GravityPage() {
                     }}
                   />
                   <Values>
-                    {fmtShib(simBreeder)} · {fmtPct(pctCirc, 5)} · live {fmtShib(liveBreeder)}
+                    {fmtShib(simBreeder)} · {fmtPct(pctCirc, 2)} · live {fmtShib(liveBreeder)}
                   </Values>
                 </Field>
 
@@ -889,7 +890,7 @@ export default function GravityPage() {
                     }}
                   />
                   <Values>
-                    {fmtShib(simCexFloat)} · {fmtPct(cexPressured, 3)} · live {fmtShib(liveCexFloat)}
+                    {fmtShib(simCexFloat)} · {fmtPct(cexPressured, 2)} · live {fmtShib(liveCexFloat)}
                   </Values>
                 </Field>
               </Controls>
@@ -912,7 +913,7 @@ export default function GravityPage() {
                     </MissionId>
                     <MissionTitle>{m.title}</MissionTitle>
                     <MissionPct>
-                      {(m.pctCirc * 100).toFixed(m.pctCirc < 0.01 ? 1 : 0)}% circ · {(m.progress * 100).toFixed(0)}%
+                      {(m.pctCirc * 100).toFixed(2)}% circ · {(m.progress * 100).toFixed(2)}%
                       {!m.done ? ` · gap ${fmtShib(m.gap)}` : ' · cleared'}
                     </MissionPct>
                     <Track>
