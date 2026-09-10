@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <rect width="256" height="256" rx="32" fill="#1a1f2e"/>
+  <rect x="16" y="16" width="224" height="224" rx="24" stroke="#ff8502" stroke-opacity="0.35" stroke-dasharray="8 6"/>
+  <!-- building / books -->
+  <rect x="72" y="88" width="112" height="100" rx="8" fill="#2a3145" stroke="#6C7284"/>
+  <rect x="88" y="108" width="24" height="28" rx="3" fill="#141823"/>
+  <rect x="120" y="108" width="24" height="28" rx="3" fill="#141823"/>
+  <rect x="152" y="108" width="24" height="28" rx="3" fill="#141823"/>
+  <rect x="88" y="148" width="24" height="28" rx="3" fill="#141823"/>
+  <rect x="120" y="148" width="24" height="28" rx="3" fill="#141823"/>
+  <rect x="152" y="148" width="24" height="28" rx="3" fill="#141823"/>
+  <!-- briefcase -->
+  <rect x="108" y="64" width="40" height="28" rx="4" fill="#fc72ff" fill-opacity="0.85"/>
+  <rect x="120" y="56" width="16" height="10" rx="2" fill="#9B9B9B"/>
+  <text x="128" y="220" text-anchor="middle" fill="#9B9B9B" font-family="system-ui,sans-serif" font-size="12" font-weight="600">CEX / INSTITUTION</text>
+  <text x="128" y="236" text-anchor="middle" fill="#6C7284" font-family="system-ui,sans-serif" font-size="10">PLACEHOLDER</text>
+</svg>

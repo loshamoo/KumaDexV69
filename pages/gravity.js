@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Head from 'next/head'
 import Header from '../src/components/Header'
-import styled from 'styled-components'
+import styled, { keyframes } from 'styled-components'
 
 const SHIB_CIRC_DEFAULT = 589.239e12
 const TIERS = [
@@ -12,12 +12,51 @@ const TIERS = [
   { id: 'T5', name: 'Co-dominance', pctCirc: 0.1, shib: 58.9239e12 }
 ]
 
+const twinkle = keyframes`
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+`
+
 const AppContainer = styled.div`
   min-height: 100vh;
   background: ${({ theme }) => theme.colors.background.primary};
+  position: relative;
+  overflow-x: hidden;
+
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 133, 2, 0.12), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 85% 20%, rgba(252, 114, 255, 0.08), transparent 50%),
+      radial-gradient(ellipse 50% 35% at 10% 60%, rgba(255, 133, 2, 0.05), transparent 45%),
+      linear-gradient(180deg, #0a0d14 0%, #141823 40%, #0d1117 100%);
+  }
+`
+
+const Stars = styled.div`
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1px 1px at 28% 42%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1.5px 1.5px at 47% 12%, rgba(255,255,255,0.65), transparent),
+    radial-gradient(1px 1px at 63% 55%, rgba(255,255,255,0.45), transparent),
+    radial-gradient(2px 2px at 78% 28%, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1px 1px at 88% 72%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1.5px 1.5px at 35% 78%, rgba(255,255,255,0.55), transparent),
+    radial-gradient(1px 1px at 55% 88%, rgba(255,255,255,0.35), transparent);
+  animation: ${twinkle} 6s ease-in-out infinite;
 `
 
 const MainContent = styled.main`
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -27,15 +66,11 @@ const MainContent = styled.main`
   @media (max-width: 768px) {
     padding: 20px 16px 60px;
   }
-
-  @media (max-width: 480px) {
-    padding: 10px 12px 48px;
-  }
 `
 
 const PageShell = styled.div`
   width: 100%;
-  max-width: 1100px;
+  max-width: 1120px;
   margin: 0 auto;
 `
 
@@ -46,15 +81,11 @@ const HeaderBlock = styled.div`
 
 const Title = styled.h1`
   margin: 0 0 12px;
-  font-size: 2rem;
+  font-size: 2.1rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text.primary};
-
-  @media (max-width: 768px) {
-    font-size: 1.65rem;
-  }
+  letter-spacing: 0.02em;
 `
-
 
 const Formula = styled.div`
   display: inline-flex;
@@ -63,42 +94,31 @@ const Formula = styled.div`
   margin: 4px 0 10px;
   padding: 10px 16px;
   border-radius: ${({ theme }) => theme.borderRadius.large};
-  background: ${({ theme }) => theme.colors.background.secondary};
+  background: rgba(26, 31, 46, 0.9);
   border: 1px solid ${({ theme }) => theme.colors.border.highlight};
-  box-shadow: ${({ theme }) => theme.shadows.medium};
+  box-shadow: 0 0 24px rgba(255, 133, 2, 0.15);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 1.15rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.secondary};
-  letter-spacing: 0.02em;
 
-  .eq {
-    color: ${({ theme }) => theme.colors.text.secondary};
-    font-weight: 500;
-  }
-
-  .sqrt {
-    font-size: 1.35rem;
-    line-height: 1;
-  }
-
-  .frac {
-    color: ${({ theme }) => theme.colors.text.primary};
-  }
+  .eq { color: ${({ theme }) => theme.colors.text.secondary}; font-weight: 500; }
+  .sqrt { font-size: 1.35rem; line-height: 1; }
+  .frac { color: ${({ theme }) => theme.colors.text.primary}; }
 `
 
 const Tagline = styled.div`
   color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 `
 
 const Lead = styled.p`
   margin: 0 auto;
-  max-width: 640px;
+  max-width: 680px;
   color: ${({ theme }) => theme.colors.text.secondary};
   font-size: 1rem;
   line-height: 1.6;
@@ -113,10 +133,84 @@ const Banner = styled.div`
   font-size: 0.9rem;
   color: ${({ theme }) => theme.colors.text.secondary};
   line-height: 1.5;
+  strong { color: ${({ theme }) => theme.colors.secondary}; }
+`
 
-  strong {
-    color: ${({ theme }) => theme.colors.secondary};
+const CastRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+
+  @media (max-width: 800px) {
+    grid-template-columns: 1fr;
   }
+`
+
+const CastCard = styled.div`
+  background: rgba(26, 31, 46, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: ${({ theme }) => theme.borderRadius.xlarge};
+  padding: 18px 16px 16px;
+  text-align: center;
+  box-shadow: ${({ theme }) => theme.shadows.large};
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, ${({ $glow }) => $glow || 'rgba(255,133,2,0.12)'}, transparent 60%);
+    pointer-events: none;
+  }
+`
+
+const CastArt = styled.div`
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid ${({ $border }) => $border || 'rgba(255,133,2,0.45)'};
+  background: #0d1117;
+  box-shadow: 0 0 20px ${({ $glow }) => $glow || 'rgba(255,133,2,0.2)'};
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+`
+
+const CastName = styled.div`
+  position: relative;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin-bottom: 4px;
+`
+
+const CastRole = styled.div`
+  position: relative;
+  font-size: 0.8rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-bottom: 8px;
+`
+
+const CastBadge = styled.span`
+  position: relative;
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 133, 2, 0.12);
+  color: ${({ theme }) => theme.colors.secondary};
+  border: 1px solid rgba(255, 133, 2, 0.3);
 `
 
 const Grid = styled.div`
@@ -124,14 +218,11 @@ const Grid = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   margin-bottom: 16px;
-
-  @media (max-width: 800px) {
-    grid-template-columns: 1fr;
-  }
+  @media (max-width: 800px) { grid-template-columns: 1fr; }
 `
 
 const Card = styled.section`
-  background: ${({ theme }) => theme.colors.background.secondary};
+  background: rgba(26, 31, 46, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: ${({ theme }) => theme.borderRadius.xlarge};
   padding: 20px 22px;
@@ -154,15 +245,10 @@ const Stat = styled.div`
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   font-size: 0.92rem;
   color: ${({ theme }) => theme.colors.text.secondary};
-
   span:last-child {
     font-weight: 700;
-    color: ${({ theme }) => theme.colors.secondary};
+    color: ${({ $accent, theme }) => $accent || theme.colors.secondary};
     text-align: right;
-  }
-
-  &:last-of-type {
-    border-bottom: none;
   }
 `
 
@@ -177,11 +263,7 @@ const Range = styled.input`
   width: 100%;
   accent-color: ${({ theme }) => theme.colors.secondary};
   cursor: pointer;
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
 `
 
 const Row = styled.div`
@@ -191,10 +273,7 @@ const Row = styled.div`
   color: ${({ theme }) => theme.colors.text.secondary};
 `
 
-const TierBar = styled.div`
-  margin: 12px 0;
-`
-
+const TierBar = styled.div` margin: 12px 0; `
 const TierHead = styled.div`
   display: flex;
   justify-content: space-between;
@@ -202,20 +281,14 @@ const TierHead = styled.div`
   font-size: 0.85rem;
   margin-bottom: 6px;
   color: ${({ theme }) => theme.colors.text.secondary};
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-    gap: 4px;
-  }
+  @media (max-width: 640px) { flex-direction: column; gap: 4px; }
 `
-
 const Track = styled.div`
   height: 10px;
   background: ${({ theme }) => theme.colors.background.interactive};
   border-radius: 6px;
   overflow: hidden;
 `
-
 const Fill = styled.div`
   height: 100%;
   width: ${({ $pct }) => Math.min(100, Math.max(0, $pct))}%;
@@ -232,13 +305,11 @@ const Stack = styled.div`
   margin: 12px 0;
   background: ${({ theme }) => theme.colors.background.interactive};
 `
-
 const Seg = styled.div`
   width: ${({ $pct }) => $pct}%;
   background: ${({ $color }) => $color};
   min-width: ${({ $pct }) => ($pct > 0 ? '2px' : '0')};
 `
-
 const Legend = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -247,7 +318,6 @@ const Legend = styled.div`
   color: ${({ theme }) => theme.colors.text.secondary};
   margin-bottom: 8px;
 `
-
 const Dot = styled.span`
   display: inline-block;
   width: 10px;
@@ -263,16 +333,11 @@ const Foot = styled.p`
   color: ${({ theme }) => theme.colors.text.tertiary};
   line-height: 1.5;
 `
-
 const LinkA = styled.a`
   color: ${({ theme }) => theme.colors.secondary};
   text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
+  &:hover { text-decoration: underline; }
 `
-
 const Band = styled.div`
   margin-top: 12px;
   padding: 12px 14px;
@@ -282,13 +347,11 @@ const Band = styled.div`
   font-size: 0.9rem;
   color: ${({ theme }) => theme.colors.text.primary};
 `
-
 const Meta = styled.p`
   font-size: 0.75rem;
   color: ${({ theme }) => theme.colors.text.tertiary};
   margin-top: 12px;
 `
-
 const RefreshBtn = styled.button`
   cursor: pointer;
   background: none;
@@ -296,22 +359,75 @@ const RefreshBtn = styled.button`
   padding: 0;
   color: ${({ theme }) => theme.colors.secondary};
   font: inherit;
-
-  &:hover {
-    text-decoration: underline;
-  }
+  &:hover { text-decoration: underline; }
 `
-
 const Muted = styled.p`
   color: ${({ theme }) => theme.colors.text.tertiary};
   font-size: 0.9rem;
   margin: 0 0 8px;
 `
-
 const Warn = styled.p`
   color: ${({ theme }) => theme.colors.warning};
   font-size: 0.85rem;
   margin: 0 0 8px;
+`
+
+const ImpactGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 8px;
+  @media (max-width: 640px) { grid-template-columns: 1fr; }
+`
+const ImpactTile = styled.div`
+  background: ${({ theme }) => theme.colors.background.module};
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  padding: 12px 14px;
+`
+const ImpactLabel = styled.div`
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+`
+const ImpactValue = styled.div`
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: ${({ $tone, theme }) =>
+    $tone === 'up' ? theme.colors.success : $tone === 'down' ? theme.colors.error : theme.colors.secondary};
+`
+const ImpactHint = styled.div`
+  font-size: 0.75rem;
+  color: ${({ theme }) => theme.colors.text.tertiary};
+  margin-top: 4px;
+  line-height: 1.35;
+`
+
+const CompareBar = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: center;
+  margin: 16px 0 8px;
+`
+const Side = styled.div`
+  text-align: ${({ $align }) => $align || 'left'};
+  font-size: 0.8rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  strong {
+    display: block;
+    color: ${({ theme }) => theme.colors.text.primary};
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+  }
+`
+const Vs = styled.div`
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.secondary};
+  letter-spacing: 0.08em;
 `
 
 function fmtShib(n) {
@@ -323,17 +439,25 @@ function fmtShib(n) {
 }
 function fmtUsd(n) {
   if (!Number.isFinite(n)) return '—'
-  if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B'
-  if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M'
-  if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K'
-  return '$' + n.toFixed(2)
+  const sign = n < 0 ? '-' : ''
+  const a = Math.abs(n)
+  if (a >= 1e9) return sign + '$' + (a / 1e9).toFixed(2) + 'B'
+  if (a >= 1e6) return sign + '$' + (a / 1e6).toFixed(2) + 'M'
+  if (a >= 1e3) return sign + '$' + (a / 1e3).toFixed(1) + 'K'
+  return sign + '$' + a.toFixed(2)
 }
 function fmtPct(n, digits = 4) {
   if (!Number.isFinite(n)) return '—'
   return (n * 100).toFixed(digits) + '%'
 }
+function fmtBps(n) {
+  if (!Number.isFinite(n)) return '—'
+  const bps = n * 10000
+  const sign = bps > 0 ? '+' : ''
+  return sign + bps.toFixed(1) + ' bps'
+}
 
-/** MODEL heuristic — educational only, never a price promise */
+/** MODEL heuristic — educational only */
 function impactBand({ pctCirc, depthMultiple, cexPressured }) {
   let score = 0
   if (pctCirc >= 0.1) score += 5
@@ -354,12 +478,63 @@ function impactBand({ pctCirc, depthMultiple, cexPressured }) {
   return { id: 'seed', label: 'Seed / early gravity (model)', detail: 'Live Breeder stake is still tiny vs circ and CEX float proxies.' }
 }
 
+/**
+ * Educational margin / book impact estimates.
+ * - DEX square-root impact proxy vs assumed ETH SHIB LP depth
+ * - CEX float share as institutional book pressure proxy
+ * - Illustrative mid move in bps if a slice of Breeder mass were to hit thin on-chain books
+ * NOT a price oracle.
+ */
+function marginImpacts({ effectiveShib, baselineShib, shibPrice, lpDepthUsd, cexFloat, circ }) {
+  const deltaShib = effectiveShib - baselineShib
+  const deltaUsd = deltaShib * shibPrice
+  const usd = effectiveShib * shibPrice
+  const depthMultiple = lpDepthUsd > 0 ? usd / lpDepthUsd : 0
+  const floatShare = cexFloat > 0 ? effectiveShib / cexFloat : 0
+  const circShare = circ > 0 ? effectiveShib / circ : 0
+
+  // Square-root market impact proxy: ~ k * sign(Δ) * sqrt(|ΔUSD| / depth)
+  // k~0.5 keeps toy numbers in a readable bps band for meme LP depths
+  const k = 0.5
+  const dexImpactFrac =
+    lpDepthUsd > 0 && Math.abs(deltaUsd) > 0
+      ? k * Math.sign(deltaUsd) * Math.sqrt(Math.abs(deltaUsd) / lpDepthUsd)
+      : 0
+  const dexImpactBps = dexImpactFrac // as fraction of price; display via fmtBps
+  const illustrativeMidMoveUsd = shibPrice * dexImpactFrac
+
+  // Institutional book: Breeder as % of assumed CEX float — "margin of control" narrative
+  const bookControlPct = floatShare
+  // If Breeder grew by delta vs float, how much of the CEX float is "matched" on-chain
+  const deltaVsFloat = cexFloat > 0 ? deltaShib / cexFloat : 0
+
+  // Escape-velocity style score: v_norm ~ sqrt(2 * M_usd / r_proxy) with r ~ circ USD
+  const M = usd
+  const r = Math.max(1, circ * shibPrice)
+  const vNorm = Math.sqrt((2 * M) / r)
+
+  return {
+    deltaShib,
+    deltaUsd,
+    depthMultiple,
+    floatShare,
+    circShare,
+    dexImpactBps,
+    illustrativeMidMoveUsd,
+    bookControlPct,
+    deltaVsFloat,
+    vNorm,
+    onchainVsCexRatio: cexFloat > 0 ? effectiveShib / cexFloat : 0
+  }
+}
+
 export default function GravityPage() {
   const [live, setLive] = useState(null)
   const [err, setErr] = useState('')
   const [loading, setLoading] = useState(true)
 
   const [breederShib, setBreederShib] = useState(1.261805487e9)
+  const [baselineShib, setBaselineShib] = useState(1.261805487e9)
   const [shibPrice, setShibPrice] = useState(5.115e-6)
   const [circ, setCirc] = useState(SHIB_CIRC_DEFAULT)
   const [lpDepthUsd, setLpDepthUsd] = useState(4.03e6)
@@ -375,7 +550,10 @@ export default function GravityPage() {
       const r = await fetch('/api/gravity')
       const j = await r.json()
       setLive(j)
-      if (j.breederShib != null) setBreederShib(j.breederShib)
+      if (j.breederShib != null) {
+        setBreederShib(j.breederShib)
+        setBaselineShib(j.breederShib)
+      }
       if (j.shibPriceUsd != null) setShibPrice(j.shibPriceUsd)
       if (j.circFallback) setCirc(j.circFallback)
       if (j.ethDexLpUsdFallback) setLpDepthUsd(j.ethDexLpUsdFallback)
@@ -400,6 +578,19 @@ export default function GravityPage() {
   const onchainFloatProxy = Math.max(0, circ - cexFloat)
   const band = impactBand({ pctCirc, depthMultiple, cexPressured })
 
+  const margins = useMemo(
+    () =>
+      marginImpacts({
+        effectiveShib,
+        baselineShib,
+        shibPrice,
+        lpDepthUsd,
+        cexFloat,
+        circ
+      }),
+    [effectiveShib, baselineShib, shibPrice, lpDepthUsd, cexFloat, circ]
+  )
+
   const tierProgress = useMemo(
     () =>
       TIERS.map((t) => {
@@ -418,8 +609,11 @@ export default function GravityPage() {
   const cexPctOfCirc = circ > 0 ? (cexFloat / circ) * 100 : 0
   const otherPct = Math.max(0, 100 - cexPctOfCirc - breederPctOfCirc)
 
+  const dexTone = margins.dexImpactBps > 0.00005 ? 'up' : margins.dexImpactBps < -0.00005 ? 'down' : 'flat'
+
   return (
     <AppContainer>
+      <Stars />
       <Head>
         <title>Gravity | KumaDex</title>
         <meta
@@ -440,24 +634,105 @@ export default function GravityPage() {
             </Formula>
             <Tagline>Escape velocity tracker</Tagline>
             <Lead>
-              Track whether Breeder SHIB mass reaches <strong>escape velocity</strong> — enough on-chain gravity to pull discovery
-              off CEX-dominated flow. Branded as{' '}
-              <strong>
-                v = √(2GM/r)
-              </strong>
-              : mass in{' '}
-              <LinkA href="https://breeder.kumatokens.com" target="_blank" rel="noreferrer">
-                Kuma Breeder
-              </LinkA>
-              {' '}
-              (M) against circulating radius (r). Educational model — not a price promise.
+              Space-themed control panel for whether Breeder SHIB mass reaches <strong>escape velocity</strong> —
+              enough on-chain gravity to pull discovery off CEX / institutional books. Branded{' '}
+              <strong>v = √(2GM/r)</strong>. Educational model — not a price promise.
             </Lead>
           </HeaderBlock>
 
+          <CastRow>
+            <CastCard $glow="rgba(255,133,2,0.18)">
+              <CastArt $border="rgba(255,133,2,0.55)" $glow="rgba(255,133,2,0.25)">
+                <img src="/gravity/kuma-suit.png" alt="Kuma Space Suit" />
+              </CastArt>
+              <CastName>Kuma Space Suit</CastName>
+              <CastRole>On-chain gravity well · Breeder mass (M)</CastRole>
+              <CastBadge>Official art</CastBadge>
+            </CastCard>
+
+            <CastCard $glow="rgba(252,114,255,0.12)">
+              <CastArt $border="rgba(252,114,255,0.45)" $glow="rgba(252,114,255,0.2)">
+                <img src="/gravity/shib-character-placeholder.svg" alt="SHIB character placeholder" />
+              </CastArt>
+              <CastName>SHIB</CastName>
+              <CastRole>Circulating supply radius (r) · asset in play</CastRole>
+              <CastBadge>Placeholder</CastBadge>
+            </CastCard>
+
+            <CastCard $glow="rgba(108,114,132,0.2)">
+              <CastArt $border="rgba(108,114,132,0.55)" $glow="rgba(108,114,132,0.15)">
+                <img src="/gravity/cex-institutional-placeholder.svg" alt="CEX institutional placeholder" />
+              </CastArt>
+              <CastName>CEX / Institution</CastName>
+              <CastRole>Off-chain books · assumed float pressure</CastRole>
+              <CastBadge>Placeholder</CastBadge>
+            </CastCard>
+          </CastRow>
+
           <Banner>
-            <strong>MODEL / educational.</strong> Escape-velocity ladder (T1–T5) measures durable % of SHIB circ in Breeder.
-            Sliders explore illustrative bands — they do <em>not</em> claim staking moves SHIB price. Live reads refresh on load.
+            <strong>MODEL / educational.</strong> Margin tiles estimate illustrative mid move vs assumed ETH DEX SHIB LP
+            depth and Breeder share of assumed CEX float when you change Breeder control. They do <em>not</em> claim
+            staking moves SHIB price. Live reads refresh on load; baseline locks at last live Breeder balance.
           </Banner>
+
+          <Card>
+            <CardTitle>Est. SHIB margin impact · Breeder vs institutional books</CardTitle>
+            <CompareBar>
+              <Side $align="left">
+                <strong>Kuma Suit / Breeder</strong>
+                {fmtShib(effectiveShib)} SHIB · {fmtUsd(usd)}
+              </Side>
+              <Vs>VS</Vs>
+              <Side $align="right">
+                <strong>CEX / Institution float</strong>
+                {fmtShib(cexFloat)} SHIB · {fmtUsd(cexFloat * shibPrice)}
+              </Side>
+            </CompareBar>
+
+            <ImpactGrid>
+              <ImpactTile>
+                <ImpactLabel>Δ Breeder vs live baseline</ImpactLabel>
+                <ImpactValue $tone={margins.deltaShib >= 0 ? 'up' : 'down'}>
+                  {margins.deltaShib >= 0 ? '+' : ''}
+                  {fmtShib(margins.deltaShib)}
+                </ImpactValue>
+                <ImpactHint>{fmtUsd(margins.deltaUsd)} notional at assumed price</ImpactHint>
+              </ImpactTile>
+              <ImpactTile>
+                <ImpactLabel>Illustrative DEX mid move</ImpactLabel>
+                <ImpactValue $tone={dexTone}>{fmtBps(margins.dexImpactBps)}</ImpactValue>
+                <ImpactHint>
+                  Toy √impact vs {fmtUsd(lpDepthUsd)} ETH DEX SHIB LP · ~{fmtUsd(margins.illustrativeMidMoveUsd)} / SHIB
+                </ImpactHint>
+              </ImpactTile>
+              <ImpactTile>
+                <ImpactLabel>Breeder ÷ CEX float (book control)</ImpactLabel>
+                <ImpactValue>{fmtPct(margins.bookControlPct, 4)}</ImpactValue>
+                <ImpactHint>Share of assumed institutional float mirrored on-chain in Breeder</ImpactHint>
+              </ImpactTile>
+              <ImpactTile>
+                <ImpactLabel>Δ control of CEX float</ImpactLabel>
+                <ImpactValue $tone={margins.deltaVsFloat >= 0 ? 'up' : 'down'}>
+                  {fmtPct(margins.deltaVsFloat, 4)}
+                </ImpactValue>
+                <ImpactHint>Change in float share since live baseline (extra slider + scrub)</ImpactHint>
+              </ImpactTile>
+              <ImpactTile>
+                <ImpactLabel>Depth multiple (Breeder USD ÷ LP)</ImpactLabel>
+                <ImpactValue>{margins.depthMultiple.toFixed(2)}×</ImpactValue>
+                <ImpactHint>On-chain gravity vs assumed ETH SHIB LP depth</ImpactHint>
+              </ImpactTile>
+              <ImpactTile>
+                <ImpactLabel>Normalized escape v · √(2GM/r)</ImpactLabel>
+                <ImpactValue>{margins.vNorm.toFixed(4)}</ImpactValue>
+                <ImpactHint>M = Breeder USD, r = circ × price (unitless toy score)</ImpactHint>
+              </ImpactTile>
+            </ImpactGrid>
+            <Meta>
+              Institutional books here = assumed CEX float proxy (~87T default), not a live venue inventory. Margin bps
+              use a square-root depth heuristic against ETH DEX SHIB LP only — CEX order-book microprice is out of scope.
+            </Meta>
+          </Card>
 
           <Grid>
             <Card $flush>
@@ -501,7 +776,7 @@ export default function GravityPage() {
               <Stack>
                 <Seg $pct={breederPctOfCirc} $color="#ff8502" title="Breeder" />
                 <Seg $pct={cexPctOfCirc} $color="#fc72ff" title="CEX float proxy" />
-                <Seg $pct={otherPct} $color="#2a3145" title="Rest of circ (wallets/DEX/etc.)" />
+                <Seg $pct={otherPct} $color="#2a3145" title="Rest of circ" />
               </Stack>
               <Legend>
                 <span>
@@ -510,11 +785,11 @@ export default function GravityPage() {
                 </span>
                 <span>
                   <Dot $color="#fc72ff" />
-                  CEX float proxy {fmtPct(cexFloat / circ, 2)}
+                  CEX float {fmtPct(cexFloat / circ, 2)}
                 </span>
                 <span>
                   <Dot $color="#2a3145" />
-                  Remainder of circ
+                  Remainder
                 </span>
               </Legend>
               <Stat>
@@ -527,13 +802,13 @@ export default function GravityPage() {
               </Stat>
               <Meta>
                 <strong>Source badge:</strong> CEX float default ~87T SHIB ≈ late-Aug 2026 CryptoQuant-via-press proxy
-                (med confidence). Refresh before big campaigns. Not live labeled wallet sum.
+                (med confidence).
               </Meta>
             </Card>
           </Grid>
 
           <Card>
-            <CardTitle>Sliders</CardTitle>
+            <CardTitle>Sliders · change Breeder control</CardTitle>
             <Label>Live Breeder SHIB (tokens) — seed from chain, then scrub</Label>
             <Range
               type="range"
@@ -545,7 +820,7 @@ export default function GravityPage() {
             />
             <Row>
               <span>{fmtShib(breederShib)}</span>
-              <span>or % circ {((breederShib / circ) * 100).toFixed(4)}%</span>
+              <span>baseline {fmtShib(baselineShib)}</span>
             </Row>
 
             <Label>What-if extra SHIB enters Breeder</Label>
@@ -576,7 +851,7 @@ export default function GravityPage() {
               <span>circ {fmtShib(circ)}</span>
             </Row>
 
-            <Label>Assumed ETH DEX SHIB LP depth (USD) — impact sensitivity</Label>
+            <Label>Assumed ETH DEX SHIB LP depth (USD)</Label>
             <Range
               type="range"
               min={1e5}
@@ -591,7 +866,7 @@ export default function GravityPage() {
             </Row>
 
             <Label>
-              Assumed CEX float (SHIB){' '}
+              Assumed CEX / institutional float (SHIB){' '}
               <label style={{ marginLeft: 8 }}>
                 <input
                   type="checkbox"
@@ -615,7 +890,7 @@ export default function GravityPage() {
             />
             <Row>
               <span>{fmtShib(cexFloat)}</span>
-              <span>{fmtPct(cexPressured, 3)} of float &quot;pressured&quot;</span>
+              <span>{fmtPct(cexPressured, 3)} of float pressured</span>
             </Row>
 
             <Label>Seek tier (1–5)</Label>
@@ -648,6 +923,13 @@ export default function GravityPage() {
           </Card>
 
           <Foot>
+            Art: Kuma Space Suit from{' '}
+            <LinkA href="https://github.com/loshamoo" target="_blank" rel="noreferrer">
+              kuma-space-suit
+            </LinkA>
+            . SHIB + CEX/Institution slots are placeholders pending character art.
+            <br />
+            <br />
             Contracts: SHIB{' '}
             <LinkA href="https://etherscan.io/token/0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE" target="_blank" rel="noreferrer">
               0x95aD…C4cE
@@ -656,17 +938,11 @@ export default function GravityPage() {
             <LinkA href="https://etherscan.io/address/0xa206D322829e04fb5acD36F289eD5367AC3E73e4" target="_blank" rel="noreferrer">
               0xa206…73e4
             </LinkA>
-            · Breeder app{' '}
+            ·{' '}
             <LinkA href="https://breeder.kumatokens.com" target="_blank" rel="noreferrer">
               breeder.kumatokens.com
             </LinkA>
-            . KUMA/WETH LP ~97.5% burned at 0xdead is supporting permanence context, not this calculator&apos;s primary
-            input.
-            <br />
-            <br />
-            <strong>Impact heuristic:</strong> score from (1) % of SHIB circ in Breeder against T1–T5 thresholds,
-            (2) Breeder SHIB USD ÷ assumed ETH DEX SHIB LP depth (depth multiple), (3) Breeder SHIB ÷ assumed CEX float.
-            Maps to seed / narrative / depth / structural-discovery bands. Explicitly not a price oracle.
+            .
           </Foot>
         </PageShell>
       </MainContent>
