@@ -1,127 +1,73 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Head from 'next/head'
 import Header from '../src/components/Header'
-import styled, { keyframes, css } from 'styled-components'
+import styled, { css } from 'styled-components'
 
 const SHIB_CIRC_DEFAULT = 589.239e12
 
-/** Mission phases = durable Breeder SHIB % of circ — deep on-chain liquidity marketshare vs CEX / institutional books */
 const MISSIONS = [
-  {
-    id: 'M1',
-    code: 'LAUNCH',
-    pctCirc: 0.001,
-    title: 'Ignition',
-    blurb: 'First on-chain gravity well — narrative notice vs CEX-only discovery.'
-  },
-  {
-    id: 'M2',
-    code: 'ORBIT',
-    pctCirc: 0.01,
-    title: 'Deep Foothold',
-    blurb: 'Breeder depth becomes a real liquidity marketshare beachhead.'
-  },
-  {
-    id: 'M3',
-    code: 'ESCAPE',
-    pctCirc: 0.02,
-    title: 'Escape Velocity',
-    blurb: 'Structural on-chain discovery pressure — pull starts leaving off-chain books.'
-  },
-  {
-    id: 'M4',
-    code: 'CAPTURE',
-    pctCirc: 0.05,
-    title: "Can't Ignore",
-    blurb: 'Material reclaim of float share from CEX / institutional SHIB holdings.'
-  },
-  {
-    id: 'M5',
-    code: 'DOMINION',
-    pctCirc: 0.1,
-    title: 'Co-Dominance',
-    blurb: 'On-chain Breeder gravity rivals off-chain marketmakers for SHIB discovery.'
-  }
+  { id: 'M1', code: 'LAUNCH', pctCirc: 0.001, title: 'Ignition', blurb: 'First on-chain gravity well vs CEX-only discovery.' },
+  { id: 'M2', code: 'ORBIT', pctCirc: 0.01, title: 'Deep Foothold', blurb: 'Breeder depth as a liquidity marketshare beachhead.' },
+  { id: 'M3', code: 'ESCAPE', pctCirc: 0.02, title: 'Escape Velocity', blurb: 'Structural on-chain discovery pressure leaves off-chain books.' },
+  { id: 'M4', code: 'CAPTURE', pctCirc: 0.05, title: "Can't Ignore", blurb: 'Material reclaim of float from CEX / institutional SHIB.' },
+  { id: 'M5', code: 'DOMINION', pctCirc: 0.1, title: 'Co-Dominance', blurb: 'On-chain gravity rivals off-chain marketmakers.' }
 ]
 
-const twinkle = keyframes`
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 0.9; }
-`
+const METRIC_KEY = [
+  { id: 'delta', label: 'Δ vs live', meaning: 'Simulated Breeder SHIB minus the live on-chain balance.' },
+  { id: 'mid', label: 'DEX mid move', meaning: 'Toy √impact in bps if Δ notional hit assumed ETH DEX SHIB LP depth.' },
+  { id: 'float', label: '÷ CEX float', meaning: 'Breeder SHIB as a share of assumed CEX / institutional float.' },
+  { id: 'dfloat', label: 'Δ float share', meaning: 'Change in that float share versus live Breeder.' },
+  { id: 'depth', label: 'Depth ×', meaning: 'Breeder SHIB USD ÷ assumed ETH DEX SHIB LP depth.' },
+  { id: 'v', label: '√(2GM/r)', meaning: 'Normalized escape score — M = Breeder USD, r = circ × price.' },
+  { id: 'bar', label: 'Supply bar', meaning: 'Orange = Breeder, pink = CEX float proxy, slate = rest of circ.' },
+  { id: 'mission', label: 'Mission %', meaning: 'Progress to each circ-marketshare milestone (M1–M5).' }
+]
 
 const thumb = (icon, border) => css`
   -webkit-appearance: none;
   appearance: none;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: #0d1117 url(${icon}) center / cover no-repeat;
+  background: ${({ theme }) => theme.colors.background.charcoal} url(${icon}) center / cover no-repeat;
   border: 2px solid ${border};
-  box-shadow: 0 0 12px ${border}55;
   cursor: grab;
-  margin-top: -12px;
+  margin-top: -11px;
 `
 
-const AppContainer = styled.div`
-  min-height: 100vh;
+const App = styled.div`
   height: 100vh;
   max-height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   background: ${({ theme }) => theme.colors.background.primary};
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background:
-      radial-gradient(ellipse 80% 45% at 50% -8%, rgba(255, 133, 2, 0.1), transparent 55%),
-      radial-gradient(ellipse 40% 30% at 90% 40%, rgba(252, 114, 255, 0.06), transparent 50%);
-  }
-`
-
-const Stars = styled.div`
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image:
-    radial-gradient(1.5px 1.5px at 14% 20%, rgba(255,255,255,0.65), transparent),
-    radial-gradient(1px 1px at 42% 14%, rgba(255,255,255,0.5), transparent),
-    radial-gradient(2px 2px at 76% 30%, rgba(255,255,255,0.75), transparent),
-    radial-gradient(1px 1px at 58% 78%, rgba(255,255,255,0.4), transparent);
-  animation: ${twinkle} 7s ease-in-out infinite;
 `
 
 const Main = styled.main`
-  position: relative;
-  z-index: 1;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px 20px 14px;
+  padding: 20px 24px 16px;
   width: 100%;
 `
 
 const Page = styled.div`
   width: 100%;
-  max-width: 1280px;
+  max-width: 1200px;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 `
 
-const Hero = styled.div`
+const Hero = styled.header`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   flex-shrink: 0;
@@ -135,129 +81,85 @@ const HeroLeft = styled.div`
 `
 
 const Suit = styled.img`
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   object-fit: cover;
   object-position: center top;
-  border: 3px solid rgba(255, 133, 2, 0.45);
-  box-shadow: ${({ theme }) => theme.shadows.medium};
-  background: ${({ theme }) => theme.colors.background.charcoal};
+  border: 1px solid ${({ theme }) => theme.colors.border.highlight};
 `
 
 const Title = styled.h1`
   margin: 0;
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   color: ${({ theme }) => theme.colors.text.primary};
-  line-height: 1.15;
 `
 
 const Formula = styled.span`
-  margin-left: 10px;
+  margin-left: 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: ${({ theme }) => theme.colors.secondary};
 `
 
-const Tagline = styled.p`
+const Sub = styled.p`
   margin: 4px 0 0;
+  font-size: 0.85rem;
   color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: 0.9rem;
-  line-height: 1.35;
+  line-height: 1.4;
+  max-width: 560px;
 `
 
-const HeroActions = styled.div`
+const Actions = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
 `
 
-const LivePill = styled.span`
-  padding: 8px 14px;
-  border-radius: 20px;
+const Pill = styled.span`
+  font-size: 0.75rem;
   font-weight: 600;
-  font-size: 0.8rem;
-  border: 1px solid ${({ $on }) => ($on ? 'rgba(39, 174, 96, 0.4)' : 'rgba(255, 133, 2, 0.35)')};
-  background: ${({ $on, theme }) => ($on ? 'rgba(39, 174, 96, 0.12)' : theme.colors.background.highlight)};
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid ${({ $on, theme }) => ($on ? 'rgba(39,174,96,0.35)' : theme.colors.border.highlight)};
   color: ${({ $on, theme }) => ($on ? theme.colors.success : theme.colors.secondary)};
-`
-
-const FilterButton = styled.button`
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: ${({ $active }) => ($active ? '#4d2a52' : '#1a1f2e')};
-  color: ${({ $active }) => ($active ? 'white' : '#4d2a52')};
-
-  &:hover {
-    border-color: rgba(77, 42, 82, 0.5);
-    background: ${({ $active }) => ($active ? '#3f2153' : 'rgba(77, 42, 82, 0.1)')};
-    transform: translateY(-1px);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-  }
-`
-
-const ActionButton = styled.button`
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-weight: bold;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-  background: #4d2a52;
-  color: white;
-
-  &:hover {
-    background: #3f2153;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(77, 42, 82, 0.4);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-`
-
-const GhostButton = styled.button`
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-weight: bold;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
   background: transparent;
-  color: #4d2a52;
-  border: 2px solid #4d2a52;
+`
 
-  &:hover {
-    background: rgba(77, 42, 82, 0.1);
+const Btn = styled.button`
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: ${({ theme }) => theme.transitions.fast};
+  border: 1px solid ${({ $primary }) => ($primary ? 'transparent' : 'rgba(255,255,255,0.14)')};
+  background: ${({ $primary }) => ($primary ? '#4d2a52' : 'transparent')};
+  color: ${({ $primary, theme }) => ($primary ? '#fff' : theme.colors.text.secondary)};
+
+  &:hover:not(:disabled) {
+    background: ${({ $primary }) => ($primary ? '#3f2153' : 'rgba(255,255,255,0.04)')};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 `
 
-const Grid = styled.div`
+const Layout = styled.div`
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: 1.2fr 0.8fr;
   gap: 14px;
 
-  @media (max-width: 980px) {
+  @media (max-width: 960px) {
     grid-template-columns: 1fr;
     overflow: auto;
   }
@@ -265,27 +167,26 @@ const Grid = styled.div`
 
 const Card = styled.section`
   background: ${({ theme }) => theme.colors.background.secondary};
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: ${({ theme }) => theme.borderRadius.xlarge};
-  padding: 18px 20px;
-  box-shadow: ${({ theme }) => theme.shadows.large};
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: ${({ theme }) => theme.borderRadius.large};
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   min-height: 0;
 `
 
-const CardTitle = styled.h2`
+const H2 = styled.h2`
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text.primary};
 `
 
-const CardSub = styled.p`
-  margin: -4px 0 0;
-  font-size: 0.82rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
+const Muted = styled.p`
+  margin: 0;
+  font-size: 0.8rem;
+  color: ${({ theme }) => theme.colors.text.tertiary};
   line-height: 1.4;
 `
 
@@ -294,15 +195,14 @@ const Compare = styled.div`
   grid-template-columns: 1fr auto 1fr;
   gap: 12px;
   align-items: center;
-  padding: 12px 14px;
-  background: ${({ theme }) => theme.colors.background.module};
-  border-radius: ${({ theme }) => theme.borderRadius.large};
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 `
 
 const Side = styled.div`
   text-align: ${({ $align }) => $align || 'left'};
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: ${({ theme }) => theme.colors.text.secondary};
   strong {
     display: flex;
@@ -310,70 +210,66 @@ const Side = styled.div`
     gap: 8px;
     justify-content: ${({ $align }) => ($align === 'right' ? 'flex-end' : 'flex-start')};
     color: ${({ theme }) => theme.colors.text.primary};
-    font-size: 0.95rem;
-    margin-bottom: 4px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 2px;
   }
 `
 
-const MiniIcon = styled.img`
-  width: 22px;
-  height: 22px;
+const Icon = styled.img`
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.15);
 `
 
-const Vs = styled.div`
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: ${({ theme }) => theme.colors.secondary};
+const Vs = styled.span`
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: ${({ theme }) => theme.colors.text.tertiary};
 `
 
 const Metrics = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
 `
 
 const Tile = styled.div`
-  background: ${({ theme }) => theme.colors.background.module};
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 12px;
   border-radius: ${({ theme }) => theme.borderRadius.medium};
-  padding: 12px 14px;
-  transition: border-color ${({ theme }) => theme.transitions.fast};
-
-  &:hover {
-    border-color: ${({ theme }) => theme.colors.border.highlight};
-  }
+  background: ${({ theme }) => theme.colors.background.module};
+  border: 1px solid rgba(255, 255, 255, 0.05);
 `
 
 const TileLabel = styled.div`
-  font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: ${({ theme }) => theme.colors.text.tertiary};
   margin-bottom: 4px;
 `
 
 const TileValue = styled.div`
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   color: ${({ $tone, theme }) =>
-    $tone === 'up' ? theme.colors.success : $tone === 'down' ? theme.colors.error : theme.colors.secondary};
+    $tone === 'up' ? theme.colors.success : $tone === 'down' ? theme.colors.error : theme.colors.text.primary};
 `
 
 const TileHint = styled.div`
-  font-size: 0.72rem;
+  margin-top: 2px;
+  font-size: 0.7rem;
   color: ${({ theme }) => theme.colors.text.tertiary};
-  margin-top: 4px;
-  line-height: 1.3;
 `
 
 const Stack = styled.div`
   display: flex;
-  height: 14px;
-  border-radius: 8px;
+  height: 8px;
+  border-radius: 999px;
   overflow: hidden;
   background: ${({ theme }) => theme.colors.background.interactive};
 `
@@ -384,143 +280,78 @@ const Seg = styled.div`
   min-width: ${({ $pct }) => ($pct > 0 ? '2px' : '0')};
 `
 
-const Legend = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 16px;
-  font-size: 0.8rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-`
+const Key = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+  padding-top: 4px;
 
-const Dot = styled.span`
-  display: inline-block;
-  width: 9px;
-  height: 9px;
-  border-radius: 2px;
-  background: ${({ $color }) => $color};
-  margin-right: 6px;
-`
-
-const MissionRail = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-`
-
-const MissionCard = styled.button`
-  text-align: left;
-  cursor: pointer;
-  border: 1px solid ${({ $active, $done, theme }) =>
-    $active ? theme.colors.border.highlight : $done ? 'rgba(39, 174, 96, 0.35)' : 'rgba(255, 255, 255, 0.1)'};
-  background: ${({ $active, theme }) => ($active ? theme.colors.background.highlight : theme.colors.background.module)};
-  border-radius: ${({ theme }) => theme.borderRadius.large};
-  padding: 10px 12px;
-  transition: all ${({ theme }) => theme.transitions.medium};
-  color: inherit;
-
-  &:hover {
-    border-color: rgba(255, 133, 2, 0.45);
-    transform: translateY(-1px);
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
   }
 `
 
-const MissionTop = styled.div`
-  display: flex;
-  justify-content: space-between;
+const KeyItem = styled.div`
+  display: grid;
+  grid-template-columns: 96px 1fr;
   gap: 8px;
-  align-items: baseline;
-  margin-bottom: 4px;
+  font-size: 0.72rem;
+  line-height: 1.35;
 `
 
-const MissionId = styled.span`
-  font-weight: 700;
-  font-size: 0.85rem;
+const KeyLabel = styled.span`
+  font-weight: 600;
   color: ${({ theme }) => theme.colors.secondary};
 `
 
-const MissionTitle = styled.span`
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: ${({ theme }) => theme.colors.text.primary};
-`
-
-const MissionPct = styled.span`
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.text.secondary};
-`
-
-const MissionBlurb = styled.div`
-  font-size: 0.75rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  line-height: 1.35;
-  margin-bottom: 6px;
-`
-
-const Track = styled.div`
-  height: 8px;
-  background: ${({ theme }) => theme.colors.background.interactive};
-  border-radius: 6px;
-  overflow: hidden;
-`
-
-const Fill = styled.div`
-  height: 100%;
-  width: ${({ $pct }) => Math.min(100, Math.max(0, $pct))}%;
-  background: ${({ $done, theme }) => ($done ? theme.colors.success : theme.colors.secondary)};
-  border-radius: 6px;
-  transition: width ${({ theme }) => theme.transitions.medium};
+const KeyMeaning = styled.span`
+  color: ${({ theme }) => theme.colors.text.tertiary};
 `
 
 const Controls = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 0;
 `
 
 const LabelRow = styled.div`
   display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 10px;
+  align-items: center;
 `
 
 const Label = styled.label`
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
   font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.secondary};
 `
 
 const Values = styled.div`
-  font-size: 0.8rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: 0.75rem;
+  color: ${({ theme }) => theme.colors.text.tertiary};
   text-align: right;
 `
 
-const IconRange = styled.input`
+const Range = styled.input`
   width: 100%;
-  height: 6px;
-  border-radius: 999px;
-  outline: none;
+  height: 4px;
   margin: 8px 0 4px;
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
+  outline: none;
 
   &::-webkit-slider-runnable-track {
-    height: 6px;
+    height: 4px;
     border-radius: 999px;
     background: ${({ theme }) => theme.colors.background.interactive};
   }
   &::-moz-range-track {
-    height: 6px;
+    height: 4px;
     border-radius: 999px;
     background: ${({ theme }) => theme.colors.background.interactive};
   }
@@ -536,10 +367,25 @@ const IconRange = styled.input`
   `}
 `
 
-const PhaseChips = styled.div`
+const Chips = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
+`
+
+const Chip = styled.button`
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid ${({ $active, theme }) => ($active ? theme.colors.border.highlight : 'rgba(255,255,255,0.1)')};
+  background: ${({ $active, theme }) => ($active ? theme.colors.background.highlight : 'transparent')};
+  color: ${({ $active, theme }) => ($active ? theme.colors.secondary : theme.colors.text.secondary)};
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.border.highlight};
+  }
 `
 
 const Assumptions = styled.div`
@@ -548,24 +394,86 @@ const Assumptions = styled.div`
   gap: 10px;
 `
 
-const Assumption = styled.div`
-  background: ${({ theme }) => theme.colors.background.module};
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
+const Field = styled.div`
   padding: 10px 12px;
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  background: ${({ theme }) => theme.colors.background.module};
+  border: 1px solid rgba(255, 255, 255, 0.05);
 `
 
-const Note = styled.p`
-  margin: 0;
+const MissionList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+`
+
+const Mission = styled.button`
+  text-align: left;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  border: 1px solid ${({ $active, $done, theme }) =>
+    $active ? theme.colors.border.highlight : $done ? 'rgba(39,174,96,0.3)' : 'rgba(255,255,255,0.06)'};
+  background: ${({ $active, theme }) => ($active ? theme.colors.background.highlight : 'transparent')};
+  color: inherit;
+  transition: border-color ${({ theme }) => theme.transitions.fast};
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.border.highlight};
+  }
+`
+
+const MissionTop = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+`
+
+const MissionName = styled.span`
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.primary};
+  span {
+    color: ${({ theme }) => theme.colors.secondary};
+    margin-right: 6px;
+  }
+`
+
+const MissionPct = styled.span`
   font-size: 0.72rem;
   color: ${({ theme }) => theme.colors.text.tertiary};
-  line-height: 1.4;
+  font-weight: 600;
+`
+
+const MissionBlurb = styled.div`
+  font-size: 0.72rem;
+  color: ${({ theme }) => theme.colors.text.tertiary};
+  line-height: 1.35;
+  margin-bottom: 8px;
+`
+
+const Track = styled.div`
+  height: 4px;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.background.interactive};
+  overflow: hidden;
+`
+
+const Fill = styled.div`
+  height: 100%;
+  width: ${({ $pct }) => Math.min(100, Math.max(0, $pct))}%;
+  background: ${({ $done, theme }) => ($done ? theme.colors.success : theme.colors.secondary)};
+  border-radius: 999px;
 `
 
 const Warn = styled.p`
   margin: 0;
+  font-size: 0.8rem;
   color: ${({ theme }) => theme.colors.warning};
-  font-size: 0.85rem;
 `
 
 function fmtShib(n) {
@@ -584,9 +492,9 @@ function fmtUsd(n) {
   if (a >= 1e3) return sign + '$' + (a / 1e3).toFixed(1) + 'K'
   return sign + '$' + a.toFixed(2)
 }
-function fmtPct(n, digits = 4) {
+function fmtPct(n, d = 4) {
   if (!Number.isFinite(n)) return '—'
-  return (n * 100).toFixed(digits) + '%'
+  return (n * 100).toFixed(d) + '%'
 }
 function fmtBps(n) {
   if (!Number.isFinite(n)) return '—'
@@ -624,16 +532,14 @@ function marginImpacts({ effectiveShib, baselineShib, shibPrice, lpDepthUsd, cex
     lpDepthUsd > 0 && Math.abs(deltaUsd) > 0
       ? k * Math.sign(deltaUsd) * Math.sqrt(Math.abs(deltaUsd) / lpDepthUsd)
       : 0
-  const deltaVsFloat = cexFloat > 0 ? deltaShib / cexFloat : 0
-  const vNorm = Math.sqrt((2 * usd) / Math.max(1, circ * shibPrice))
   return {
     deltaShib,
     deltaUsd,
     depthMultiple,
     floatShare,
     dexImpactBps,
-    deltaVsFloat,
-    vNorm,
+    deltaVsFloat: cexFloat > 0 ? deltaShib / cexFloat : 0,
+    vNorm: Math.sqrt((2 * usd) / Math.max(1, circ * shibPrice)),
     illustrativeMidMoveUsd: shibPrice * dexImpactBps
   }
 }
@@ -642,13 +548,11 @@ export default function GravityPage() {
   const [live, setLive] = useState(null)
   const [err, setErr] = useState('')
   const [loading, setLoading] = useState(true)
-
   const [liveBreeder, setLiveBreeder] = useState(1.261805487e9)
   const [livePrice, setLivePrice] = useState(5.115e-6)
   const [liveLpDepth, setLiveLpDepth] = useState(4.03e6)
   const [liveCexFloat, setLiveCexFloat] = useState(87e12)
   const [circ, setCirc] = useState(SHIB_CIRC_DEFAULT)
-
   const [simBreeder, setSimBreeder] = useState(1.261805487e9)
   const [simPrice, setSimPrice] = useState(5.115e-6)
   const [simLpDepth, setSimLpDepth] = useState(4.03e6)
@@ -660,7 +564,6 @@ export default function GravityPage() {
   }, [dirty])
 
   const markDirty = (key) => setDirty((d) => ({ ...d, [key]: true }))
-
   const resetToLive = () => {
     setSimBreeder(liveBreeder)
     setSimPrice(livePrice)
@@ -705,111 +608,95 @@ export default function GravityPage() {
   }, [load])
 
   const effectiveShib = simBreeder
-  const baselineShib = liveBreeder
-  const shibPrice = simPrice
-  const lpDepthUsd = simLpDepth
-  const cexFloat = simCexFloat
   const isFullyLive = !dirty.breeder && !dirty.price && !dirty.lp && !dirty.cex
-
   const pctCirc = circ > 0 ? effectiveShib / circ : 0
-  const usd = effectiveShib * shibPrice
-  const depthMultiple = lpDepthUsd > 0 ? usd / lpDepthUsd : 0
-  const cexPressured = cexFloat > 0 ? effectiveShib / cexFloat : 0
+  const usd = effectiveShib * simPrice
+  const depthMultiple = simLpDepth > 0 ? usd / simLpDepth : 0
+  const cexPressured = simCexFloat > 0 ? effectiveShib / simCexFloat : 0
   const band = impactBand({ pctCirc, depthMultiple, cexPressured })
-
   const margins = useMemo(
-    () => marginImpacts({ effectiveShib, baselineShib, shibPrice, lpDepthUsd, cexFloat, circ }),
-    [effectiveShib, baselineShib, shibPrice, lpDepthUsd, cexFloat, circ]
+    () =>
+      marginImpacts({
+        effectiveShib,
+        baselineShib: liveBreeder,
+        shibPrice: simPrice,
+        lpDepthUsd: simLpDepth,
+        cexFloat: simCexFloat,
+        circ
+      }),
+    [effectiveShib, liveBreeder, simPrice, simLpDepth, simCexFloat, circ]
   )
-
   const missions = useMemo(
     () =>
       MISSIONS.map((m) => {
         const target = m.pctCirc * circ
-        const pct = target > 0 ? effectiveShib / target : 0
-        const gap = Math.max(0, target - effectiveShib)
-        return { ...m, target, progress: Math.min(pct, 1), gap, done: pct >= 1 }
+        const progress = target > 0 ? Math.min(effectiveShib / target, 1) : 0
+        return { ...m, target, progress, gap: Math.max(0, target - effectiveShib), done: progress >= 1 }
       }),
     [circ, effectiveShib]
   )
-
   const activeMission = missions.find((m) => !m.done) || missions[missions.length - 1]
-  const cleared = missions.filter((m) => m.done).map((m) => m.id)
-
   const breederPctOfCirc = pctCirc * 100
-  const cexPctOfCirc = circ > 0 ? (cexFloat / circ) * 100 : 0
+  const cexPctOfCirc = circ > 0 ? (simCexFloat / circ) * 100 : 0
   const otherPct = Math.max(0, 100 - cexPctOfCirc - breederPctOfCirc)
   const dexTone = margins.dexImpactBps > 0.00005 ? 'up' : margins.dexImpactBps < -0.00005 ? 'down' : 'flat'
   const maxBreeder = MISSIONS[4].pctCirc * circ
 
-  const jumpMission = (m) => {
-    markDirty('breeder')
-    setSimBreeder(m.pctCirc * circ)
-  }
-
   return (
-    <AppContainer>
-      <Stars />
+    <App>
       <Head>
         <title>Gravity | KumaDex</title>
-        <meta
-          name="description"
-          content="Gravity mission phases: reclaim SHIB deep-liquidity marketshare from CEX / institutional books. v = √(2GM/r)."
-        />
+        <meta name="description" content="Gravity mission phases — reclaim SHIB deep liquidity from CEX books. v = √(2GM/r)." />
       </Head>
       <Header />
       <Main>
         <Page>
           <Hero>
             <HeroLeft>
-              <Suit src="/gravity/kuma-suit.png" alt="Kuma Space Suit" />
+              <Suit src="/gravity/kuma-suit.png" alt="" />
               <div>
                 <Title>
                   Gravity
                   <Formula>v = √(2GM/r)</Formula>
                 </Title>
-                <Tagline>
-                  Escape-velocity tracker — mission phases reclaim SHIB deep liquidity from CEX / institutional books.
-                </Tagline>
+                <Sub>Mission phases track Breeder SHIB circ share reclaiming deep liquidity from CEX / institutional books.</Sub>
               </div>
             </HeroLeft>
-            <HeroActions>
-              <LivePill $on={isFullyLive}>{isFullyLive ? 'Live' : 'Simulating'}</LivePill>
-              <ActionButton type="button" onClick={resetToLive} disabled={isFullyLive}>
-                Reset to live
-              </ActionButton>
-              <GhostButton type="button" onClick={load}>
+            <Actions>
+              <Pill $on={isFullyLive}>{isFullyLive ? 'Live' : 'Simulating'}</Pill>
+              <Btn $primary type="button" onClick={resetToLive} disabled={isFullyLive}>
+                Reset
+              </Btn>
+              <Btn type="button" onClick={load}>
                 {loading ? '…' : 'Refresh'}
-              </GhostButton>
-            </HeroActions>
+              </Btn>
+            </Actions>
           </Hero>
 
           {err && <Warn>{err}</Warn>}
 
-          <Grid>
+          <Layout>
             <Card>
               <div>
-                <CardTitle>Simulated metrics</CardTitle>
-                <CardSub>
-                  Breeder on-chain gravity vs assumed CEX / institutional SHIB float. Educational — not a price oracle.
-                </CardSub>
+                <H2>Metrics</H2>
+                <Muted>Simulated Breeder gravity vs assumed CEX float. Educational model — not a price oracle.</Muted>
               </div>
 
               <Compare>
-                <Side $align="left">
+                <Side>
                   <strong>
-                    <MiniIcon src="/gravity/kuma.png" alt="" />
-                    Kuma Breeder
+                    <Icon src="/gravity/kuma.png" alt="" />
+                    Breeder
                   </strong>
-                  {fmtShib(effectiveShib)} SHIB · {fmtUsd(usd)}
+                  {fmtShib(effectiveShib)} · {fmtUsd(usd)}
                 </Side>
                 <Vs>VS</Vs>
                 <Side $align="right">
                   <strong>
-                    CEX / Institution
-                    <MiniIcon src="/gravity/shib.png" alt="" />
+                    CEX float
+                    <Icon src="/gravity/shib.png" alt="" />
                   </strong>
-                  {fmtShib(cexFloat)} SHIB · {fmtUsd(cexFloat * shibPrice)}
+                  {fmtShib(simCexFloat)} · {fmtUsd(simCexFloat * simPrice)}
                 </Side>
               </Compare>
 
@@ -820,27 +707,27 @@ export default function GravityPage() {
                     {margins.deltaShib >= 0 ? '+' : ''}
                     {fmtShib(margins.deltaShib)}
                   </TileValue>
-                  <TileHint>{fmtUsd(margins.deltaUsd)} notional</TileHint>
+                  <TileHint>{fmtUsd(margins.deltaUsd)}</TileHint>
                 </Tile>
                 <Tile>
                   <TileLabel>DEX mid move</TileLabel>
                   <TileValue $tone={dexTone}>{fmtBps(margins.dexImpactBps)}</TileValue>
-                  <TileHint>~{fmtUsd(margins.illustrativeMidMoveUsd)} / SHIB</TileHint>
+                  <TileHint>~{fmtUsd(margins.illustrativeMidMoveUsd)}/SHIB</TileHint>
                 </Tile>
                 <Tile>
                   <TileLabel>÷ CEX float</TileLabel>
                   <TileValue>{fmtPct(margins.floatShare, 4)}</TileValue>
-                  <TileHint>on-chain book control</TileHint>
+                  <TileHint>book control</TileHint>
                 </Tile>
                 <Tile>
                   <TileLabel>Δ float share</TileLabel>
                   <TileValue $tone={margins.deltaVsFloat >= 0 ? 'up' : 'down'}>
                     {fmtPct(margins.deltaVsFloat, 4)}
                   </TileValue>
-                  <TileHint>vs live Breeder</TileHint>
+                  <TileHint>vs live</TileHint>
                 </Tile>
                 <Tile>
-                  <TileLabel>Depth multiple</TileLabel>
+                  <TileLabel>Depth ×</TileLabel>
                   <TileValue>{margins.depthMultiple.toFixed(2)}×</TileValue>
                   <TileHint>vs ETH SHIB LP</TileHint>
                 </Tile>
@@ -856,37 +743,31 @@ export default function GravityPage() {
                 <Seg $pct={cexPctOfCirc} $color="#fc72ff" />
                 <Seg $pct={otherPct} $color="#2a3145" />
               </Stack>
-              <Legend>
-                <span>
-                  <Dot $color="#ff8502" />
-                  Breeder {fmtPct(pctCirc, 5)} circ
-                </span>
-                <span>
-                  <Dot $color="#fc72ff" />
-                  CEX float {fmtPct(cexFloat / circ, 2)}
-                </span>
-                <span>
-                  <Dot $color="#2a3145" />
-                  Remainder
-                </span>
-                <span>
-                  Cleared: {cleared.length ? cleared.join(', ') : 'none'} · Next {activeMission.id} gap{' '}
-                  {fmtShib(activeMission.gap)}
-                </span>
-              </Legend>
+
+              <div>
+                <H2 style={{ marginBottom: 8, fontSize: '0.85rem' }}>Metric key</H2>
+                <Key>
+                  {METRIC_KEY.map((k) => (
+                    <KeyItem key={k.id}>
+                      <KeyLabel>{k.label}</KeyLabel>
+                      <KeyMeaning>{k.meaning}</KeyMeaning>
+                    </KeyItem>
+                  ))}
+                </Key>
+              </div>
 
               <Controls>
                 <div>
                   <LabelRow>
                     <Label>
-                      <MiniIcon src="/gravity/kuma.png" alt="" />
-                      Kuma Breeder SHIB {dirty.breeder ? '(sim)' : '(live)'}
+                      <Icon src="/gravity/kuma.png" alt="" />
+                      Breeder SHIB {dirty.breeder ? '(sim)' : '(live)'}
                     </Label>
                     <Values>
                       {fmtShib(simBreeder)} · {fmtPct(pctCirc, 5)} · live {fmtShib(liveBreeder)}
                     </Values>
                   </LabelRow>
-                  <IconRange
+                  <Range
                     type="range"
                     $icon="/gravity/kuma.png"
                     $border="#ff8502"
@@ -899,8 +780,8 @@ export default function GravityPage() {
                       setSimBreeder(Number(e.target.value))
                     }}
                   />
-                  <PhaseChips>
-                    <FilterButton
+                  <Chips>
+                    <Chip
                       type="button"
                       $active={!dirty.breeder}
                       onClick={() => {
@@ -909,33 +790,33 @@ export default function GravityPage() {
                       }}
                     >
                       Live
-                    </FilterButton>
+                    </Chip>
                     {MISSIONS.map((m) => (
-                      <FilterButton
+                      <Chip
                         key={m.id}
                         type="button"
-                        $active={
-                          dirty.breeder &&
-                          Math.abs(simBreeder - m.pctCirc * circ) / (m.pctCirc * circ || 1) < 0.02
-                        }
-                        onClick={() => jumpMission(m)}
+                        $active={dirty.breeder && Math.abs(simBreeder - m.pctCirc * circ) / (m.pctCirc * circ || 1) < 0.02}
+                        onClick={() => {
+                          markDirty('breeder')
+                          setSimBreeder(m.pctCirc * circ)
+                        }}
                       >
                         {m.id}
-                      </FilterButton>
+                      </Chip>
                     ))}
-                  </PhaseChips>
+                  </Chips>
                 </div>
 
                 <Assumptions>
-                  <Assumption>
+                  <Field>
                     <LabelRow>
                       <Label>
-                        <MiniIcon src="/gravity/shib.png" alt="" />
-                        SHIB price
+                        <Icon src="/gravity/shib.png" alt="" />
+                        Price
                       </Label>
                       <Values>${simPrice.toExponential(2)}</Values>
                     </LabelRow>
-                    <IconRange
+                    <Range
                       type="range"
                       $icon="/gravity/shib.png"
                       $border="#fc72ff"
@@ -948,18 +829,18 @@ export default function GravityPage() {
                         setSimPrice(Number(e.target.value))
                       }}
                     />
-                  </Assumption>
-                  <Assumption>
+                  </Field>
+                  <Field>
                     <LabelRow>
                       <Label>
-                        <MiniIcon src="/gravity/shib.png" alt="" />
-                        SHIB LP depth
+                        <Icon src="/gravity/shib.png" alt="" />
+                        LP depth
                       </Label>
                       <Values>
                         {fmtUsd(simLpDepth)} · {depthMultiple.toFixed(1)}×
                       </Values>
                     </LabelRow>
-                    <IconRange
+                    <Range
                       type="range"
                       $icon="/gravity/shib.png"
                       $border="#fc72ff"
@@ -972,18 +853,18 @@ export default function GravityPage() {
                         setSimLpDepth(Number(e.target.value))
                       }}
                     />
-                  </Assumption>
-                  <Assumption style={{ gridColumn: '1 / -1' }}>
+                  </Field>
+                  <Field style={{ gridColumn: '1 / -1' }}>
                     <LabelRow>
                       <Label>
-                        <MiniIcon src="/gravity/shib.png" alt="" />
-                        CEX / institutional SHIB float
+                        <Icon src="/gravity/shib.png" alt="" />
+                        CEX float
                       </Label>
                       <Values>
-                        {fmtShib(simCexFloat)} · {fmtPct(cexPressured, 3)} pressured
+                        {fmtShib(simCexFloat)} · {fmtPct(cexPressured, 3)}
                       </Values>
                     </LabelRow>
-                    <IconRange
+                    <Range
                       type="range"
                       $icon="/gravity/shib.png"
                       $border="#fc72ff"
@@ -996,59 +877,58 @@ export default function GravityPage() {
                         setSimCexFloat(Number(e.target.value))
                       }}
                     />
-                  </Assumption>
+                  </Field>
                 </Assumptions>
 
-                <Note>
-                  Live defaults refresh ~60s. Dirty knobs stay simulated until Reset. Margin bps = toy √impact vs ETH DEX
-                  SHIB LP. {live?.priceSource || '—'} · {live?.priceAsOf || '—'}
-                </Note>
+                <Muted>
+                  Live defaults refresh ~60s. {live?.priceSource || '—'} · {live?.priceAsOf || '—'} · next {activeMission.id}{' '}
+                  gap {fmtShib(activeMission.gap)}
+                </Muted>
               </Controls>
             </Card>
 
             <Card>
               <div>
-                <CardTitle>Mission phases</CardTitle>
-                <CardSub>
-                  Deep-liquidity marketshare milestones — Breeder % of SHIB circ as the path to reclaim discovery from
-                  CEX / off-chain marketmakers.
-                </CardSub>
+                <H2>Mission phases</H2>
+                <Muted>Circ-marketshare milestones reclaiming discovery from CEX / off-chain marketmakers.</Muted>
               </div>
-
-              <MissionRail>
+              <MissionList>
                 {missions.map((m) => (
-                  <MissionCard
+                  <Mission
                     key={m.id}
                     type="button"
                     $active={activeMission.id === m.id}
                     $done={m.done}
-                    onClick={() => jumpMission(m)}
+                    onClick={() => {
+                      markDirty('breeder')
+                      setSimBreeder(m.pctCirc * circ)
+                    }}
                   >
                     <MissionTop>
-                      <span>
-                        <MissionId>
-                          {m.id} · {m.code}
-                        </MissionId>{' '}
-                        <MissionTitle>{m.title}</MissionTitle>
-                      </span>
+                      <MissionName>
+                        <span>
+                          {m.id} {m.code}
+                        </span>
+                        {m.title}
+                      </MissionName>
                       <MissionPct>
-                        {(m.pctCirc * 100).toFixed(m.pctCirc < 0.01 ? 1 : 0)}% circ · {(m.progress * 100).toFixed(0)}%
+                        {(m.pctCirc * 100).toFixed(m.pctCirc < 0.01 ? 1 : 0)}% · {(m.progress * 100).toFixed(0)}%
                       </MissionPct>
                     </MissionTop>
                     <MissionBlurb>
                       {m.blurb}
-                      {!m.done ? ` Gap ${fmtShib(m.gap)} SHIB.` : ' Cleared.'}
+                      {!m.done ? ` Gap ${fmtShib(m.gap)}.` : ' Cleared.'}
                     </MissionBlurb>
                     <Track>
                       <Fill $pct={m.progress * 100} $done={m.done} />
                     </Track>
-                  </MissionCard>
+                  </Mission>
                 ))}
-              </MissionRail>
+              </MissionList>
             </Card>
-          </Grid>
+          </Layout>
         </Page>
       </Main>
-    </AppContainer>
+    </App>
   )
 }
