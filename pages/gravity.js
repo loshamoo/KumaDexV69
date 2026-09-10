@@ -6,11 +6,11 @@ import styled, { css } from 'styled-components'
 const SHIB_CIRC_DEFAULT = 589.239e12
 
 const MISSIONS = [
-  { id: 'M1', code: 'LAUNCH', pctCirc: 0.001, title: 'Ignition', blurb: 'First on-chain gravity well vs CEX-only discovery.' },
-  { id: 'M2', code: 'ORBIT', pctCirc: 0.01, title: 'Deep Foothold', blurb: 'Breeder depth as a liquidity marketshare beachhead.' },
-  { id: 'M3', code: 'ESCAPE', pctCirc: 0.02, title: 'Escape Velocity', blurb: 'Structural on-chain discovery pressure leaves off-chain books.' },
-  { id: 'M4', code: 'CAPTURE', pctCirc: 0.05, title: "Can't Ignore", blurb: 'Material reclaim of float from CEX / institutional SHIB.' },
-  { id: 'M5', code: 'DOMINION', pctCirc: 0.1, title: 'Co-Dominance', blurb: 'On-chain gravity rivals off-chain marketmakers.' }
+  { id: 'K1', code: 'LAUNCH', pctCirc: 0.001, title: 'Ignition', blurb: 'First on-chain gravity well vs CEX-only discovery.' },
+  { id: 'K2', code: 'ORBIT', pctCirc: 0.01, title: 'Deep Foothold', blurb: 'Breeder depth as a liquidity marketshare beachhead.' },
+  { id: 'K3', code: 'ESCAPE', pctCirc: 0.02, title: 'Escape Velocity', blurb: 'Structural on-chain discovery pressure leaves off-chain books.' },
+  { id: 'K4', code: 'CAPTURE', pctCirc: 0.05, title: "Can't Ignore", blurb: 'Material reclaim of float from CEX / institutional SHIB.' },
+  { id: 'K5', code: 'DOMINION', pctCirc: 0.1, title: 'Co-Dominance', blurb: 'On-chain gravity rivals off-chain marketmakers.' }
 ]
 
 const METRIC_KEY = [
@@ -21,7 +21,7 @@ const METRIC_KEY = [
   { id: 'depth', label: 'Depth ×', meaning: 'Breeder SHIB USD ÷ assumed ETH DEX SHIB LP depth.' },
   { id: 'v', label: '√(2GM/r)', meaning: 'Normalized escape score — M = Breeder USD, r = circ × price.' },
   { id: 'bar', label: 'Supply bar', meaning: 'Orange = Breeder, pink = CEX float proxy, slate = rest of circ.' },
-  { id: 'mission', label: 'Mission %', meaning: 'Progress to each circ-marketshare milestone (M1–M5).' }
+  { id: 'mission', label: 'Mission %', meaning: 'Progress to each circ-marketshare milestone (K1–K5).' }
 ]
 
 const thumb = (icon, border) => css`
