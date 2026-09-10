@@ -15,7 +15,7 @@ const MISSIONS = [
 
 const METRIC_KEY = [
   { id: 'delta', label: 'Δ vs live', meaning: 'Simulated Breeder SHIB minus the live on-chain balance.' },
-  { id: 'mid', label: 'DEX mid move', meaning: 'Toy √impact in bps if Δ notional hit assumed ETH DEX SHIB LP depth.' },
+  { id: 'mid', label: 'DEX mid move', meaning: 'Toy √impact as % if Δ notional hit assumed ETH DEX SHIB LP depth.' },
   { id: 'float', label: '÷ CEX float', meaning: 'Breeder SHIB as a share of assumed CEX / institutional float.' },
   { id: 'dfloat', label: 'Δ float share', meaning: 'Change in that float share versus live Breeder.' },
   { id: 'depth', label: 'Depth ×', meaning: 'Breeder SHIB USD ÷ assumed ETH DEX SHIB LP depth.' },
@@ -181,16 +181,31 @@ const Compare = styled.div`
 
 const Side = styled.div`
   text-align: center;
-  font-size: 1rem;
+  min-width: 180px;
+`
+
+const SideTitle = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+`
+
+const SideStat = styled.div`
+  font-size: 0.9rem;
   color: ${({ theme }) => theme.colors.text.secondary};
-  strong {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: ${({ theme }) => theme.colors.text.primary};
-    font-size: 1.15rem;
+  line-height: 1.45;
+  span {
+    color: ${({ theme }) => theme.colors.text.tertiary};
+    margin-right: 6px;
+    font-size: 0.75rem;
     font-weight: 600;
-    margin-right: 8px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
   }
 `
 
@@ -496,30 +511,45 @@ const Foot = styled.div`
   text-align: center;
 `
 
+function fmtCoef(n, digits = 2) {
+  return n.toLocaleString('en-US', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  })
+}
+
 function fmtShib(n) {
   if (!Number.isFinite(n)) return '—'
-  if (n >= 1e12) return (n / 1e12).toFixed(2) + 'T'
-  if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B'
-  if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M'
-  return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
+  const a = Math.abs(n)
+  const s = n < 0 ? '-' : ''
+  if (a >= 1e12) return s + fmtCoef(a / 1e12, 2) + 'T'
+  if (a >= 1e9) return s + fmtCoef(a / 1e9, 2) + 'B'
+  if (a >= 1e6) return s + fmtCoef(a / 1e6, 2) + 'M'
+  return s + a.toLocaleString('en-US', { maximumFractionDigits: 0 })
 }
+
 function fmtUsd(n) {
   if (!Number.isFinite(n)) return '—'
   const sign = n < 0 ? '-' : ''
   const a = Math.abs(n)
-  if (a >= 1e9) return sign + '$' + (a / 1e9).toFixed(2) + 'B'
-  if (a >= 1e6) return sign + '$' + (a / 1e6).toFixed(2) + 'M'
-  if (a >= 1e3) return sign + '$' + (a / 1e3).toFixed(1) + 'K'
-  return sign + '$' + a.toFixed(2)
+  if (a >= 1e9) return sign + '$' + fmtCoef(a / 1e9, 2) + 'B'
+  if (a >= 1e6) return sign + '$' + a.toLocaleString('en-US', { maximumFractionDigits: 0 })
+  if (a >= 1e3) return sign + '$' + a.toLocaleString('en-US', { maximumFractionDigits: 0 })
+  return sign + '$' + a.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
+
 function fmtPct(n, d = 2) {
   if (!Number.isFinite(n)) return '—'
-  return (n * 100).toFixed(d) + '%'
+  const pct = n * 100
+  return pct.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) + '%'
 }
-function fmtBps(n) {
+
+/** Signed percent from a fractional move (replaces bps display). */
+function fmtMovePct(n, d = 2) {
   if (!Number.isFinite(n)) return '—'
-  const bps = n * 10000
-  return (bps > 0 ? '+' : '') + bps.toFixed(1) + ' bps'
+  const pct = n * 100
+  const sign = pct > 0 ? '+' : ''
+  return sign + pct.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) + '%'
 }
 
 function impactBand({ pctCirc, depthMultiple, cexPressured }) {
@@ -704,19 +734,33 @@ export default function GravityPage() {
             <Body>
               <Compare>
                 <Side>
-                  <strong>
+                  <SideTitle>
                     <Icon src="/gravity/kuma.png" alt="" />
                     Breeder
-                  </strong>
-                  {fmtShib(effectiveShib)} · {fmtUsd(usd)}
+                  </SideTitle>
+                  <SideStat>
+                    <span>Supply</span>
+                    {fmtShib(effectiveShib)} SHIB
+                  </SideStat>
+                  <SideStat>
+                    <span>TVL</span>
+                    {fmtUsd(usd)}
+                  </SideStat>
                 </Side>
                 <Vs>VS</Vs>
                 <Side>
-                  <strong>
+                  <SideTitle>
                     <Icon src="/gravity/shib.png" alt="" />
                     CEX float
-                  </strong>
-                  {fmtShib(simCexFloat)} · {fmtUsd(simCexFloat * simPrice)}
+                  </SideTitle>
+                  <SideStat>
+                    <span>Supply</span>
+                    {fmtShib(simCexFloat)} SHIB
+                  </SideStat>
+                  <SideStat>
+                    <span>TVL</span>
+                    {fmtUsd(simCexFloat * simPrice)}
+                  </SideStat>
                 </Side>
               </Compare>
 
@@ -732,7 +776,7 @@ export default function GravityPage() {
                   </Tile>
                   <Tile>
                     <TileLabel>DEX mid move</TileLabel>
-                    <TileValue $tone={dexTone}>{fmtBps(margins.dexImpactBps)}</TileValue>
+                    <TileValue $tone={dexTone}>{fmtMovePct(margins.dexImpactBps)}</TileValue>
                     <TileHint>~{fmtUsd(margins.illustrativeMidMoveUsd)}/SHIB</TileHint>
                   </Tile>
                   <Tile>
@@ -743,7 +787,7 @@ export default function GravityPage() {
                   <Tile>
                     <TileLabel>Δ float share</TileLabel>
                     <TileValue $tone={margins.deltaVsFloat >= 0 ? 'up' : 'down'}>
-                      {fmtPct(margins.deltaVsFloat, 2)}
+                      {fmtMovePct(margins.deltaVsFloat, 2)}
                     </TileValue>
                     <TileHint>vs live</TileHint>
                   </Tile>
