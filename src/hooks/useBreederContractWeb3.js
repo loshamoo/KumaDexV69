@@ -11,7 +11,7 @@ import {
 import Web3 from 'web3';
 
 // Cache keys
-const CACHE_KEY = 'kumabreeder_pools_cache_v3';
+const CACHE_KEY = 'kumabreeder_pools_cache_v4';
 const PRICE_CACHE_KEY = 'kumabreeder_prices_cache';
 const CACHE_EXPIRY = 30000;
 
@@ -139,57 +139,112 @@ const useBreederContractWeb3 = () => {
   // Fetch prices from CoinGecko + calculate dKUMA/KUMA from LP
   const fetchPrices = useCallback(async () => {
     try {
-      const ids = 'ethereum,shiba-inu,leash,akita-inu,dogelon-mars';
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`,
-        { signal: AbortSignal.timeout(10000) }
-      );
-      const data = await response.json();
+      const ids = 'ethereum,shiba-inu,leash,doge-killer,akita-inu,dogelon-mars';
+      let data = {};
+      try {
+        const response = await fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`,
+          { signal: AbortSignal.timeout(10000) }
+        );
+        if (response.ok) data = await response.json();
+      } catch (cgErr) {
+        console.warn('CoinGecko fallback prices failed:', cgErr.message);
+      }
       const ethPrice = data.ethereum?.usd || 2000;
+      const DUST = 1e-9;
+      const isDust = (p) => !(p > 0) || p < DUST;
+      const isSane = (p) => p > 0 && p >= DUST;
 
-      // Calculate dKUMA and KUMA prices from their LP pools
-      let dkumaPrice = 0;
-      let kumaPrice = 0;
+      const pickSane = (lpImplied, candidates) => {
+        const sane = (candidates || []).filter(isSane);
+        const bestExt = sane.length ? Math.max(...sane) : 0;
+        // LP-implied (incl. honestly-low dust) wins for ethereum TVL consistency
+        if (lpImplied > 0) return lpImplied;
+        return bestExt || 0;
+      };
 
+      // Known ETH LPs for LP-implied prices (same as API)
+      const ETH_LPS = {
+        dkuma: '0xB4EdfeC7Aa5588786901C63A8338e4b37611B2Af',
+        kuma: '0xDF60E6416Fcf8C955FdDF01148753A911F7A5905',
+        shib: '0x811beed0119b4afce20d2583eb608c6f7af1954f',
+        leash: '0x874376be8231dad99aabf9ef0767b3cc054c60ee',
+        akita: '0xda3a20aad0c34fa742bd9813d45bbf67c787ae0b',
+        elon: '0x7b73644935b8e68019ac6356c40661e1bc315860'
+      };
+      const WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
+
+      let lpImplied = {};
       const currentWeb3 = walletWeb3 || readOnlyWeb3;
       if (currentWeb3) {
-        try {
-          // Get dKUMA price from dKUMA-ETH LP (dKUMA is token0, WETH is token1)
-          const dkumaLpContract = new currentWeb3.eth.Contract(UNISWAP_PAIR_ABI, DKUMA_ETH_LP);
-          const dkumaReserves = await fetchWithTimeout(dkumaLpContract.methods.getReserves().call(), 10000);
-          const dkumaReserve = parseFloat(currentWeb3.utils.fromWei(dkumaReserves._reserve0.toString(), 'ether'));
-          const dkumaEthReserve = parseFloat(currentWeb3.utils.fromWei(dkumaReserves._reserve1.toString(), 'ether'));
-          if (dkumaReserve > 0) {
-            dkumaPrice = (dkumaEthReserve * ethPrice) / dkumaReserve;
+        await Promise.all(Object.entries(ETH_LPS).map(async ([key, lpAddr]) => {
+          try {
+            const c = new currentWeb3.eth.Contract(UNISWAP_PAIR_ABI, lpAddr);
+            const [token0, reserves] = await Promise.all([
+              fetchWithTimeout(c.methods.token0().call(), 8000),
+              fetchWithTimeout(c.methods.getReserves().call(), 8000)
+            ]);
+            const t0 = token0.toLowerCase();
+            const r0 = parseFloat(currentWeb3.utils.fromWei((reserves._reserve0 || reserves[0]).toString(), 'ether'));
+            const r1 = parseFloat(currentWeb3.utils.fromWei((reserves._reserve1 || reserves[1]).toString(), 'ether'));
+            let ethReserve = 0, tokenReserve = 0;
+            if (t0 === WETH) { ethReserve = r0; tokenReserve = r1; }
+            else { ethReserve = r1; tokenReserve = r0; }
+            // If token0 is not WETH and token1 side assumed WETH for known ETH pairs
+            if (tokenReserve > 0 && ethReserve > 0) {
+              lpImplied[key] = (ethReserve / tokenReserve) * ethPrice;
+            }
+          } catch (e) {
+            console.warn('LP-implied', key, e.message);
           }
-          console.log('dKUMA LP:', { reserve: dkumaReserve, ethReserve: dkumaEthReserve, price: dkumaPrice });
+        }));
+      }
 
-          // Get KUMA price from KUMA-ETH LP (KUMA is token0, WETH is token1)
-          const kumaLpContract = new currentWeb3.eth.Contract(UNISWAP_PAIR_ABI, KUMA_ETH_LP);
-          const kumaReserves = await fetchWithTimeout(kumaLpContract.methods.getReserves().call(), 10000);
-          const kumaReserve = parseFloat(currentWeb3.utils.fromWei(kumaReserves._reserve0.toString(), 'ether'));
-          const kumaEthReserve = parseFloat(currentWeb3.utils.fromWei(kumaReserves._reserve1.toString(), 'ether'));
-          if (kumaReserve > 0) {
-            kumaPrice = (kumaEthReserve * ethPrice) / kumaReserve;
+      const cgShib = data['shiba-inu']?.usd || 0;
+      const cgLeash = data.leash?.usd || 0;
+      const cgDogeKiller = data['doge-killer']?.usd || 0;
+      const cgAkita = data['akita-inu']?.usd || 0;
+      const cgElon = data['dogelon-mars']?.usd || 0;
+      const leashCgBest = [cgDogeKiller, cgLeash].filter(isSane).sort((a, b) => b - a)[0] || 0;
+
+      // DexScreener only if LEASH LP-implied missing (do not override drained/poisoned LP)
+      let dsLeash = 0;
+      const leashLp = lpImplied.leash || 0;
+      if (!(leashLp > 0) && !isSane(leashCgBest)) {
+        try {
+          const dsResp = await fetch(
+            'https://api.dexscreener.com/latest/dex/tokens/0x27C70Cd1946795B66be9d954418546998b546634',
+            { signal: AbortSignal.timeout(8000) }
+          );
+          if (dsResp.ok) {
+            const ds = await dsResp.json();
+            const target = '0x27c70cd1946795b66be9d954418546998b546634';
+            const asBase = (ds.pairs || []).filter(p => (p.baseToken?.address || '').toLowerCase() === target);
+            const byLiq = (a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0);
+            const MIN_LIQ = 1000;
+            const ethSane = asBase.filter(p => p.chainId === 'ethereum').sort(byLiq)
+              .find(p => parseFloat(p.priceUsd) >= DUST && (p.liquidity?.usd || 0) >= MIN_LIQ);
+            const anySane = asBase.slice().sort(byLiq)
+              .find(p => parseFloat(p.priceUsd) >= DUST && (p.liquidity?.usd || 0) >= MIN_LIQ);
+            dsLeash = parseFloat((ethSane || anySane)?.priceUsd) || 0;
           }
-          console.log('KUMA LP:', { reserve: kumaReserve, ethReserve: kumaEthReserve, price: kumaPrice });
-        } catch (lpErr) {
-          console.warn('Failed to get LP prices:', lpErr.message);
+        } catch (e) {
+          console.warn('DexScreener LEASH failed:', e.message);
         }
       }
 
       const newPrices = {
         eth: ethPrice,
         weth: ethPrice,
-        shib: data['shiba-inu']?.usd || 0.00001,
-        leash: data.leash?.usd || 300,
-        akita: data['akita-inu']?.usd || 0.0000001,
-        elon: data['dogelon-mars']?.usd || 0.0000001,
-        kuma: kumaPrice || 0.000000001,
-        dkuma: dkumaPrice || 0.00002
+        shib: pickSane(lpImplied.shib || 0, [cgShib]),
+        leash: pickSane(leashLp, [leashCgBest, cgDogeKiller, cgLeash, dsLeash]),
+        akita: pickSane(lpImplied.akita || 0, [cgAkita]),
+        elon: pickSane(lpImplied.elon || 0, [cgElon]),
+        kuma: lpImplied.kuma || 0.000000001,
+        dkuma: lpImplied.dkuma || 0.00002
       };
 
-      console.log('Final Prices:', { eth: ethPrice, dkuma: dkumaPrice, kuma: kumaPrice });
+      console.log('Final Prices:', { eth: ethPrice, lpImplied, leash: newPrices.leash, dkuma: newPrices.dkuma, kuma: newPrices.kuma });
 
       setPrices(newPrices);
       setCachedPrices(newPrices);
@@ -468,7 +523,8 @@ const useBreederContractWeb3 = () => {
           tvl: pool.tvl,
           stakedBalance: '0',
           totalSupply: '0',
-          apr: pool.apr,
+          apr: (pool.aprNote === 'tvl-too-low') ? '0.00' : String(pool.apr ?? '0.00'),
+          aprNote: pool.aprNote || null,
           userDeposit: '0',
           pendingReward: '0',
           isActive: pool.allocPoint > 0
@@ -625,12 +681,16 @@ const useBreederContractWeb3 = () => {
         const tvl = parseFloat(pool.tvl) || 0;
 
         let apr = '0.00';
-        if (allocPoint > 0 && tvl > 0 && sushiPerBlockNum > 0 && dkumaPrice > 0) {
+        let aprNote = null;
+        if (tvl < 10) {
+          apr = '0.00';
+          aprNote = 'tvl-too-low';
+        } else if (allocPoint > 0 && tvl > 0 && sushiPerBlockNum > 0 && dkumaPrice > 0) {
           const poolShare = allocPoint / totalAllocNum;
           const yearlyDkumaRewards = sushiPerBlockNum * BLOCKS_PER_YEAR * poolShare;
           const yearlyRewardsUSD = yearlyDkumaRewards * dkumaPrice;
           const aprValue = (yearlyRewardsUSD / tvl) * 100;
-          apr = Math.min(aprValue, 999999).toFixed(2);
+          apr = Math.min(aprValue, 1e6).toFixed(2);
         }
 
         return {
@@ -649,6 +709,7 @@ const useBreederContractWeb3 = () => {
           stakedBalance: pool.stakedBalance,
           totalSupply: pool.totalSupply,
           apr,
+          aprNote,
           userDeposit: '0',
           pendingReward: '0',
           isActive: allocPoint > 0
@@ -799,6 +860,15 @@ const useBreederContractWeb3 = () => {
       fetchAllPools();
     }
   }, [contract, readOnlyWeb3, pools.length]);
+
+  // Live sync: refresh pools ~every 30s while Breeder page mounted
+  useEffect(() => {
+    if (!isHydrated) return undefined;
+    const id = setInterval(() => {
+      fetchAllPools(true);
+    }, 30000);
+    return () => clearInterval(id);
+  }, [isHydrated, fetchAllPools]);
 
   // Fetch user data when account changes
   useEffect(() => {

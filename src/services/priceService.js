@@ -80,13 +80,29 @@ class PriceService {
         const data = await response.json();
 
         if (data.pairs && data.pairs.length > 0) {
-          // Find the most liquid Ethereum pair
-          const ethPairs = data.pairs
+          const DUST = 1e-9;
+          const MIN_LIQ = 1000;
+          const target = tokenAddress.toLowerCase();
+          // priceUsd is for baseToken only
+          const asBase = data.pairs.filter(p => (p.baseToken?.address || '').toLowerCase() === target);
+          const ethPairs = asBase
             .filter(p => p.chainId === 'ethereum')
             .sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
 
-          if (ethPairs.length > 0 && ethPairs[0].priceUsd) {
-            const price = parseFloat(ethPairs[0].priceUsd);
+          const saneEth = ethPairs.find(p => parseFloat(p.priceUsd) >= DUST && (p.liquidity?.usd || 0) >= MIN_LIQ);
+          if (saneEth && saneEth.priceUsd) {
+            const price = parseFloat(saneEth.priceUsd);
+            this.cache[cacheKey] = price;
+            this.lastFetch[cacheKey] = now;
+            return price;
+          }
+          // Ethereum dust (e.g. poisoned LEASH-ETH LP): any-chain liquid pair where token is base
+          const allPairs = asBase
+            .slice()
+            .sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
+          const saneAny = allPairs.find(p => parseFloat(p.priceUsd) >= DUST && (p.liquidity?.usd || 0) >= MIN_LIQ);
+          if (saneAny && saneAny.priceUsd) {
+            const price = parseFloat(saneAny.priceUsd);
             this.cache[cacheKey] = price;
             this.lastFetch[cacheKey] = now;
             return price;
@@ -98,7 +114,7 @@ class PriceService {
       const coingeckoIds = {
         'KUMA': 'kuma-inu',
         'SHIB': 'shiba-inu',
-        'LEASH': 'leash',
+        'LEASH': 'doge-killer', // prefer doge-killer over absurd CG "leash" dust id
         'ELON': 'dogelon-mars',
         'AKITA': 'akita-inu',
         'ETH': 'ethereum',
@@ -126,10 +142,21 @@ class PriceService {
         const data = await response.json();
 
         if (data[coingeckoId] && data[coingeckoId].usd) {
-          const price = data[coingeckoId].usd;
-          this.cache[cacheKey] = price;
-          this.lastFetch[cacheKey] = now;
-          return price;
+          let price = data[coingeckoId].usd;
+          // LEASH: if doge-killer missing/dust, try legacy "leash" id; reject absurd dust
+          if (upperSymbol === 'LEASH' && (!(price > 0) || price < 1e-9)) {
+            try {
+              const leashResp = await fetch(`${COINGECKO_API}/simple/price?ids=leash&vs_currencies=usd`);
+              const leashData = await leashResp.json();
+              const alt = leashData.leash?.usd;
+              if (alt > 0 && alt >= 1e-9) price = alt;
+            } catch (_) {}
+          }
+          if (!(upperSymbol === 'LEASH' && (!(price > 0) || price < 1e-9))) {
+            this.cache[cacheKey] = price;
+            this.lastFetch[cacheKey] = now;
+            return price;
+          }
         }
       }
 
