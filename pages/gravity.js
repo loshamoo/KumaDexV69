@@ -361,11 +361,19 @@ const Range = styled.input`
   `}
 `
 
+
+const BottomStack = styled.div`
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+`
+
 const Missions = styled.div`
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 8px;
-  margin-top: auto;
   flex-shrink: 0;
   @media (max-width: 800px) {
     grid-template-columns: repeat(5, minmax(120px, 1fr));
@@ -777,6 +785,7 @@ export default function GravityPage() {
                 </div>
               </div>
 
+              <BottomStack>
               <Controls>
                 <Field $live={!dirty.breeder}>
                   <FieldTop>
@@ -922,6 +931,7 @@ export default function GravityPage() {
                   </Mission>
                 ))}
               </Missions>
+              </BottomStack>
             </Body>
 
             <Foot>
