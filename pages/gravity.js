@@ -115,9 +115,10 @@ const Dash = styled.div`
 
 const HeadRow = styled.div`
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  text-align: center;
+  gap: 6px;
   flex-shrink: 0;
 `
 
@@ -140,7 +141,7 @@ const Suit = styled.img`
 
 const Title = styled.h1`
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.6rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: ${({ theme }) => theme.colors.text.primary};
@@ -155,10 +156,11 @@ const Formula = styled.span`
 `
 
 const Sub = styled.p`
-  margin: 2px 0 0;
-  font-size: 0.8rem;
+  margin: 0;
+  font-size: 0.85rem;
   color: ${({ theme }) => theme.colors.text.secondary};
-  line-height: 1.35;
+  line-height: 1.4;
+  max-width: 640px;
 `
 
 const Body = styled.div`
@@ -173,34 +175,34 @@ const Compare = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 16px;
   flex-wrap: wrap;
 `
 
 const Side = styled.div`
   text-align: center;
-  font-size: 0.78rem;
+  font-size: 1rem;
   color: ${({ theme }) => theme.colors.text.secondary};
   strong {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     color: ${({ theme }) => theme.colors.text.primary};
-    font-size: 0.85rem;
+    font-size: 1.15rem;
     font-weight: 600;
-    margin-right: 6px;
+    margin-right: 8px;
   }
 `
 
 const Icon = styled.img`
-  width: 16px;
-  height: 16px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   object-fit: cover;
 `
 
 const Vs = styled.span`
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: ${({ theme }) => theme.colors.text.tertiary};
@@ -566,8 +568,6 @@ export default function GravityPage() {
   const [live, setLive] = useState(null)
   const [err, setErr] = useState('')
   const [loading, setLoading] = useState(true)
-  const [keyOpen, setKeyOpen] = useState(false)
-
   const [liveBreeder, setLiveBreeder] = useState(1.261805487e9)
   const [livePrice, setLivePrice] = useState(5.115e-6)
   const [liveLpDepth, setLiveLpDepth] = useState(4.03e6)
@@ -688,35 +688,17 @@ export default function GravityPage() {
       <Header />
       <Main>
         <Page>
-          <TopBar>
-            <Pill $on={isFullyLive}>{isFullyLive ? 'All live' : 'Simulating'}</Pill>
-            <Btn type="button" onClick={() => setKeyOpen(true)}>
-              Metric key
-            </Btn>
-            <Btn $primary type="button" onClick={resetAll} disabled={isFullyLive}>
-              Reset all
-            </Btn>
-            <Btn type="button" onClick={load}>
-              {loading ? '…' : 'Refresh live'}
-            </Btn>
-          </TopBar>
-
-          {err && <Warn>{err}</Warn>}
+{err && <Warn>{err}</Warn>}
 
           <Dash>
             <HeadRow>
-              <TitleBlock>
-                <Suit src="/gravity/kuma-suit.png" alt="" />
-                <div>
-                  <Title>
-                    Gravity
-                    <Formula>v = √(2GM/r)</Formula>
-                  </Title>
-                  <Sub>
-                    Mission phases track Breeder SHIB circ share reclaiming deep liquidity from CEX / institutional books.
-                  </Sub>
-                </div>
-              </TitleBlock>
+              <Title>
+                Gravity
+                <Formula>v = √(2GM/r)</Formula>
+              </Title>
+              <Sub>
+                Mission phases track Breeder SHIB circ share reclaiming deep liquidity from CEX / institutional books.
+              </Sub>
             </HeadRow>
 
             <Body>
@@ -941,27 +923,6 @@ export default function GravityPage() {
           </Dash>
         </Page>
       </Main>
-
-      {keyOpen && (
-        <Overlay onClick={() => setKeyOpen(false)}>
-          <Modal onClick={(e) => e.stopPropagation()}>
-            <ModalTitle>Metric key</ModalTitle>
-            <KeyList>
-              {METRIC_KEY.map((k) => (
-                <KeyRow key={k.id}>
-                  <KeyLabel>{k.label}</KeyLabel>
-                  <KeyMeaning>{k.meaning}</KeyMeaning>
-                </KeyRow>
-              ))}
-            </KeyList>
-            <div style={{ textAlign: 'center', marginTop: 16 }}>
-              <Btn $primary type="button" onClick={() => setKeyOpen(false)}>
-                Close
-              </Btn>
-            </div>
-          </Modal>
-        </Overlay>
-      )}
     </App>
   )
 }
