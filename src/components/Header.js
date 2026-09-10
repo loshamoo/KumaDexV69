@@ -831,7 +831,7 @@ const Header = () => {
               closeAllDropdowns();
               setPoolDropdownOpen(newState);
             }}
-            className={poolDropdownOpen || isActive('/breeder') || isActive('/dkuma-breeder') || isActive('/discover') || isActive('/flippening') || isActive('/meme-liquidity') ? 'open' : ''}
+            className={poolDropdownOpen || isActive('/breeder') || isActive('/dkuma-breeder') || isActive('/discover') ? 'open' : ''}
           >
             Pool
           </MoreButton>
@@ -871,28 +871,6 @@ const Header = () => {
               style={isActive('/dkuma-breeder') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
             >
               dKuma Breeder
-            </DropdownItem>
-            <DropdownItem
-              href="/flippening"
-              onClick={(e) => {
-                e.preventDefault();
-                router.push('/flippening');
-                setPoolDropdownOpen(false);
-              }}
-              style={isActive('/flippening') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
-            >
-              Flippening
-            </DropdownItem>
-            <DropdownItem
-              href="/meme-liquidity"
-              onClick={(e) => {
-                e.preventDefault();
-                router.push('/meme-liquidity');
-                setPoolDropdownOpen(false);
-              }}
-              style={isActive('/meme-liquidity') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
-            >
-              Meme Liquidity
             </DropdownItem>
           </DropdownMenu>
         </DropdownContainer>
@@ -963,7 +941,7 @@ const Header = () => {
               closeAllDropdowns();
               setDropdownOpen(newState);
             }}
-            className={dropdownOpen ? 'open' : ''}
+            className={dropdownOpen || isActive('/flippening') || isActive('/meme-liquidity') ? 'open' : ''}
           >
             More
           </MoreButton>
@@ -980,6 +958,28 @@ const Header = () => {
               }}
             >
               Addresses
+            </DropdownItem>
+            <DropdownItem
+              href="/flippening"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push('/flippening');
+                setDropdownOpen(false);
+              }}
+              style={isActive('/flippening') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
+            >
+              Flippening
+            </DropdownItem>
+            <DropdownItem
+              href="/meme-liquidity"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push('/meme-liquidity');
+                setDropdownOpen(false);
+              }}
+              style={isActive('/meme-liquidity') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
+            >
+              Meme Liquidity
             </DropdownItem>
             <DropdownItem
               href="/monthly-revenue"
