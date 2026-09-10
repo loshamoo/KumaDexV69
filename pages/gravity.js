@@ -27,8 +27,8 @@ const METRIC_KEY = [
 const thumb = (icon, border) => css`
   -webkit-appearance: none;
   appearance: none;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: ${({ theme }) => theme.colors.background.charcoal} url(${icon}) center / cover no-repeat;
   border: 2px solid ${border};
@@ -51,47 +51,96 @@ const Main = styled.main`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 24px 16px;
+  padding: 14px 20px 12px;
   width: 100%;
 `
 
 const Page = styled.div`
   width: 100%;
-  max-width: 1200px;
+  max-width: 1180px;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 `
 
-const Hero = styled.header`
+const TopBar = styled.div`
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
 `
 
-const HeroLeft = styled.div`
+const Pill = styled.span`
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid ${({ $on, theme }) => ($on ? 'rgba(39,174,96,0.35)' : theme.colors.border.highlight)};
+  color: ${({ $on, theme }) => ($on ? theme.colors.success : theme.colors.secondary)};
+`
+
+const Btn = styled.button`
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid ${({ $primary }) => ($primary ? 'transparent' : 'rgba(255,255,255,0.14)')};
+  background: ${({ $primary }) => ($primary ? '#4d2a52' : 'transparent')};
+  color: ${({ $primary, theme }) => ($primary ? '#fff' : theme.colors.text.secondary)};
+  &:hover:not(:disabled) {
+    background: ${({ $primary }) => ($primary ? '#3f2153' : 'rgba(255,255,255,0.04)')};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+`
+
+const Dash = styled.div`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: ${({ theme }) => theme.borderRadius.large};
+  padding: 16px;
+`
+
+const HeadRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+`
+
+const TitleBlock = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
   min-width: 0;
 `
 
 const Suit = styled.img`
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   object-fit: cover;
   object-position: center top;
   border: 1px solid ${({ theme }) => theme.colors.border.highlight};
+  flex-shrink: 0;
 `
 
 const Title = styled.h1`
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: ${({ theme }) => theme.colors.text.primary};
@@ -100,160 +149,96 @@ const Title = styled.h1`
 const Formula = styled.span`
   margin-left: 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.secondary};
 `
 
 const Sub = styled.p`
-  margin: 4px 0 0;
-  font-size: 0.85rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  line-height: 1.4;
-  max-width: 560px;
-`
-
-const Actions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-`
-
-const Pill = styled.span`
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid ${({ $on, theme }) => ($on ? 'rgba(39,174,96,0.35)' : theme.colors.border.highlight)};
-  color: ${({ $on, theme }) => ($on ? theme.colors.success : theme.colors.secondary)};
-  background: transparent;
-`
-
-const Btn = styled.button`
+  margin: 2px 0 0;
   font-size: 0.8rem;
-  font-weight: 600;
-  padding: 8px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: ${({ theme }) => theme.transitions.fast};
-  border: 1px solid ${({ $primary }) => ($primary ? 'transparent' : 'rgba(255,255,255,0.14)')};
-  background: ${({ $primary }) => ($primary ? '#4d2a52' : 'transparent')};
-  color: ${({ $primary, theme }) => ($primary ? '#fff' : theme.colors.text.secondary)};
-
-  &:hover:not(:disabled) {
-    background: ${({ $primary }) => ($primary ? '#3f2153' : 'rgba(255,255,255,0.04)')};
-    color: ${({ theme }) => theme.colors.text.primary};
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
+  color: ${({ theme }) => theme.colors.text.secondary};
+  line-height: 1.35;
 `
 
-const Layout = styled.div`
+const Body = styled.div`
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 14px;
-
-  @media (max-width: 960px) {
-    grid-template-columns: 1fr;
-    overflow: auto;
-  }
-`
-
-const Card = styled.section`
-  background: ${({ theme }) => theme.colors.background.secondary};
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: ${({ theme }) => theme.borderRadius.large};
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-height: 0;
-`
-
-const H2 = styled.h2`
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.text.primary};
-`
-
-const Muted = styled.p`
-  margin: 0;
-  font-size: 0.8rem;
-  color: ${({ theme }) => theme.colors.text.tertiary};
-  line-height: 1.4;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 12px;
 `
 
 const Compare = styled.div`
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 12px;
+  display: flex;
   align-items: center;
-  padding: 12px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
 `
 
 const Side = styled.div`
-  text-align: ${({ $align }) => $align || 'left'};
-  font-size: 0.8rem;
+  text-align: center;
+  font-size: 0.78rem;
   color: ${({ theme }) => theme.colors.text.secondary};
   strong {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    justify-content: ${({ $align }) => ($align === 'right' ? 'flex-end' : 'flex-start')};
+    gap: 6px;
     color: ${({ theme }) => theme.colors.text.primary};
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    margin-bottom: 2px;
+    margin-right: 6px;
   }
 `
 
 const Icon = styled.img`
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   object-fit: cover;
 `
 
 const Vs = styled.span`
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: ${({ theme }) => theme.colors.text.tertiary};
 `
 
 const Metrics = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 `
 
 const Tile = styled.div`
-  padding: 10px 12px;
+  padding: 12px 10px;
   border-radius: ${({ theme }) => theme.borderRadius.medium};
   background: ${({ theme }) => theme.colors.background.module};
   border: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 78px;
 `
 
 const TileLabel = styled.div`
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: ${({ theme }) => theme.colors.text.tertiary};
   margin-bottom: 4px;
 `
 
 const TileValue = styled.div`
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: ${({ $tone, theme }) =>
@@ -262,16 +247,19 @@ const TileValue = styled.div`
 
 const TileHint = styled.div`
   margin-top: 2px;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: ${({ theme }) => theme.colors.text.tertiary};
 `
 
 const Stack = styled.div`
   display: flex;
-  height: 8px;
+  height: 6px;
   border-radius: 999px;
   overflow: hidden;
   background: ${({ theme }) => theme.colors.background.interactive};
+  max-width: 420px;
+  margin: 0 auto;
+  width: 100%;
 `
 
 const Seg = styled.div`
@@ -280,71 +268,78 @@ const Seg = styled.div`
   min-width: ${({ $pct }) => ($pct > 0 ? '2px' : '0')};
 `
 
-const Key = styled.div`
+const Controls = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px 14px;
-  padding-top: 4px;
-
-  @media (max-width: 700px) {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1.2fr 1fr 1fr 1.2fr;
+  gap: 10px;
+  align-items: start;
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr 1fr;
   }
 `
 
-const KeyItem = styled.div`
-  display: grid;
-  grid-template-columns: 96px 1fr;
-  gap: 8px;
-  font-size: 0.72rem;
-  line-height: 1.35;
+const Field = styled.div`
+  padding: 10px;
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  background: ${({ theme }) => theme.colors.background.module};
+  border: 1px solid ${({ $live, theme }) => ($live ? 'rgba(39,174,96,0.35)' : 'rgba(255,255,255,0.05)')};
 `
 
-const KeyLabel = styled.span`
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.secondary};
-`
-
-const KeyMeaning = styled.span`
-  color: ${({ theme }) => theme.colors.text.tertiary};
-`
-
-const Controls = styled.div`
+const FieldTop = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-`
-
-const LabelRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
   align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 2px;
 `
 
 const Label = styled.label`
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
+  gap: 6px;
+  font-size: 0.72rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text.secondary};
 `
 
+const LiveTag = styled.span`
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: ${({ $on, theme }) => ($on ? theme.colors.success : theme.colors.secondary)};
+`
+
+const ResetOne = styled.button`
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid rgba(39, 174, 96, 0.35);
+  background: transparent;
+  color: ${({ theme }) => theme.colors.success};
+  &:disabled {
+    opacity: 0;
+    pointer-events: none;
+  }
+`
+
 const Values = styled.div`
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: ${({ theme }) => theme.colors.text.tertiary};
-  text-align: right;
+  text-align: center;
+  margin-top: 2px;
 `
 
 const Range = styled.input`
   width: 100%;
   height: 4px;
-  margin: 8px 0 4px;
+  margin: 8px 0 2px;
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
   outline: none;
-
   &::-webkit-slider-runnable-track {
     height: 4px;
     border-radius: 999px;
@@ -355,7 +350,6 @@ const Range = styled.input`
     border-radius: 999px;
     background: ${({ theme }) => theme.colors.background.interactive};
   }
-
   ${({ $icon, $border }) => css`
     &::-webkit-slider-thumb {
       ${thumb($icon, $border)}
@@ -367,97 +361,54 @@ const Range = styled.input`
   `}
 `
 
-const Chips = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-`
-
-const Chip = styled.button`
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 5px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-  border: 1px solid ${({ $active, theme }) => ($active ? theme.colors.border.highlight : 'rgba(255,255,255,0.1)')};
-  background: ${({ $active, theme }) => ($active ? theme.colors.background.highlight : 'transparent')};
-  color: ${({ $active, theme }) => ($active ? theme.colors.secondary : theme.colors.text.secondary)};
-
-  &:hover {
-    border-color: ${({ theme }) => theme.colors.border.highlight};
-  }
-`
-
-const Assumptions = styled.div`
+const Missions = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-`
-
-const Field = styled.div`
-  padding: 10px 12px;
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  background: ${({ theme }) => theme.colors.background.module};
-  border: 1px solid rgba(255, 255, 255, 0.05);
-`
-
-const MissionList = styled.div`
-  display: flex;
-  flex-direction: column;
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
+  flex-shrink: 0;
+  @media (max-width: 800px) {
+    grid-template-columns: repeat(5, minmax(120px, 1fr));
+    overflow-x: auto;
+  }
 `
 
 const Mission = styled.button`
-  text-align: left;
+  text-align: center;
   cursor: pointer;
-  padding: 12px;
+  padding: 10px 8px;
   border-radius: ${({ theme }) => theme.borderRadius.medium};
   border: 1px solid ${({ $active, $done, theme }) =>
     $active ? theme.colors.border.highlight : $done ? 'rgba(39,174,96,0.3)' : 'rgba(255,255,255,0.06)'};
-  background: ${({ $active, theme }) => ($active ? theme.colors.background.highlight : 'transparent')};
+  background: ${({ $active, theme }) => ($active ? theme.colors.background.highlight : theme.colors.background.module)};
   color: inherit;
-  transition: border-color ${({ theme }) => theme.transitions.fast};
-
-  &:hover {
-    border-color: ${({ theme }) => theme.colors.border.highlight};
-  }
+  min-width: 0;
 `
 
-const MissionTop = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 4px;
+const MissionId = styled.div`
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.secondary};
+  letter-spacing: 0.04em;
 `
 
-const MissionName = styled.span`
-  font-size: 0.82rem;
+const MissionTitle = styled.div`
+  font-size: 0.78rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text.primary};
-  span {
-    color: ${({ theme }) => theme.colors.secondary};
-    margin-right: 6px;
-  }
+  margin: 2px 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `
 
-const MissionPct = styled.span`
-  font-size: 0.72rem;
+const MissionPct = styled.div`
+  font-size: 0.65rem;
   color: ${({ theme }) => theme.colors.text.tertiary};
-  font-weight: 600;
-`
-
-const MissionBlurb = styled.div`
-  font-size: 0.72rem;
-  color: ${({ theme }) => theme.colors.text.tertiary};
-  line-height: 1.35;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 `
 
 const Track = styled.div`
-  height: 4px;
+  height: 3px;
   border-radius: 999px;
   background: ${({ theme }) => theme.colors.background.interactive};
   overflow: hidden;
@@ -467,13 +418,71 @@ const Fill = styled.div`
   height: 100%;
   width: ${({ $pct }) => Math.min(100, Math.max(0, $pct))}%;
   background: ${({ $done, theme }) => ($done ? theme.colors.success : theme.colors.secondary)};
-  border-radius: 999px;
+`
+
+const Overlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: ${({ theme }) => theme.zIndex.modal};
+  padding: 20px;
+`
+
+const Modal = styled.div`
+  width: 100%;
+  max-width: 480px;
+  background: ${({ theme }) => theme.colors.background.charcoal};
+  border: 1px solid ${({ theme }) => theme.colors.border.highlight};
+  border-radius: 16px;
+  padding: 20px;
+  max-height: 80vh;
+  overflow: auto;
+`
+
+const ModalTitle = styled.h2`
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: ${({ theme }) => theme.colors.secondary};
+  text-align: center;
+`
+
+const KeyList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`
+
+const KeyRow = styled.div`
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  font-size: 0.8rem;
+  line-height: 1.35;
+`
+
+const KeyLabel = styled.span`
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.text.primary};
+`
+
+const KeyMeaning = styled.span`
+  color: ${({ theme }) => theme.colors.text.secondary};
 `
 
 const Warn = styled.p`
   margin: 0;
   font-size: 0.8rem;
   color: ${({ theme }) => theme.colors.warning};
+  text-align: center;
+`
+
+const Foot = styled.div`
+  font-size: 0.68rem;
+  color: ${({ theme }) => theme.colors.text.tertiary};
+  text-align: center;
 `
 
 function fmtShib(n) {
@@ -548,11 +557,14 @@ export default function GravityPage() {
   const [live, setLive] = useState(null)
   const [err, setErr] = useState('')
   const [loading, setLoading] = useState(true)
+  const [keyOpen, setKeyOpen] = useState(false)
+
   const [liveBreeder, setLiveBreeder] = useState(1.261805487e9)
   const [livePrice, setLivePrice] = useState(5.115e-6)
   const [liveLpDepth, setLiveLpDepth] = useState(4.03e6)
   const [liveCexFloat, setLiveCexFloat] = useState(87e12)
   const [circ, setCirc] = useState(SHIB_CIRC_DEFAULT)
+
   const [simBreeder, setSimBreeder] = useState(1.261805487e9)
   const [simPrice, setSimPrice] = useState(5.115e-6)
   const [simLpDepth, setSimLpDepth] = useState(4.03e6)
@@ -564,7 +576,16 @@ export default function GravityPage() {
   }, [dirty])
 
   const markDirty = (key) => setDirty((d) => ({ ...d, [key]: true }))
-  const resetToLive = () => {
+
+  const resetField = (key) => {
+    if (key === 'breeder') setSimBreeder(liveBreeder)
+    if (key === 'price') setSimPrice(livePrice)
+    if (key === 'lp') setSimLpDepth(liveLpDepth)
+    if (key === 'cex') setSimCexFloat(liveCexFloat)
+    setDirty((d) => ({ ...d, [key]: false }))
+  }
+
+  const resetAll = () => {
     setSimBreeder(liveBreeder)
     setSimPrice(livePrice)
     setSimLpDepth(liveLpDepth)
@@ -579,20 +600,27 @@ export default function GravityPage() {
       const r = await fetch('/api/gravity')
       const j = await r.json()
       setLive(j)
-      const breeder = j.breederShib != null ? j.breederShib : null
-      const price = j.shibPriceUsd != null ? j.shibPriceUsd : null
-      const lp = j.ethDexLpUsdFallback != null ? j.ethDexLpUsdFallback : null
-      const cex = j.cexFloatFallback != null ? j.cexFloatFallback : null
+
+      const breeder = Number.isFinite(j.breederShib) ? j.breederShib : null
+      const price = Number.isFinite(j.shibPriceUsd) ? j.shibPriceUsd : null
+      const lp = Number.isFinite(j.ethDexLpUsdFallback) ? j.ethDexLpUsdFallback : null
+      const cex = Number.isFinite(j.cexFloatFallback) ? j.cexFloatFallback : null
+      const circVal = Number.isFinite(j.circFallback) ? j.circFallback : null
+
+      // Always refresh live snapshots
       if (breeder != null) setLiveBreeder(breeder)
       if (price != null) setLivePrice(price)
       if (lp != null) setLiveLpDepth(lp)
       if (cex != null) setLiveCexFloat(cex)
-      if (j.circFallback) setCirc(j.circFallback)
+      if (circVal != null) setCirc(circVal)
+
+      // Sync sims only when that field is still live-tracking
       const d = dirtyRef.current
       if (breeder != null && !d.breeder) setSimBreeder(breeder)
       if (price != null && !d.price) setSimPrice(price)
       if (lp != null && !d.lp) setSimLpDepth(lp)
       if (cex != null && !d.cex) setSimCexFloat(cex)
+
       if (!j.ok) setErr(j.error || j.note || 'Live read degraded')
     } catch (e) {
       setErr(String(e.message || e))
@@ -651,37 +679,38 @@ export default function GravityPage() {
       <Header />
       <Main>
         <Page>
-          <Hero>
-            <HeroLeft>
-              <Suit src="/gravity/kuma-suit.png" alt="" />
-              <div>
-                <Title>
-                  Gravity
-                  <Formula>v = √(2GM/r)</Formula>
-                </Title>
-                <Sub>Mission phases track Breeder SHIB circ share reclaiming deep liquidity from CEX / institutional books.</Sub>
-              </div>
-            </HeroLeft>
-            <Actions>
-              <Pill $on={isFullyLive}>{isFullyLive ? 'Live' : 'Simulating'}</Pill>
-              <Btn $primary type="button" onClick={resetToLive} disabled={isFullyLive}>
-                Reset
-              </Btn>
-              <Btn type="button" onClick={load}>
-                {loading ? '…' : 'Refresh'}
-              </Btn>
-            </Actions>
-          </Hero>
+          <TopBar>
+            <Pill $on={isFullyLive}>{isFullyLive ? 'All live' : 'Simulating'}</Pill>
+            <Btn type="button" onClick={() => setKeyOpen(true)}>
+              Metric key
+            </Btn>
+            <Btn $primary type="button" onClick={resetAll} disabled={isFullyLive}>
+              Reset all
+            </Btn>
+            <Btn type="button" onClick={load}>
+              {loading ? '…' : 'Refresh live'}
+            </Btn>
+          </TopBar>
 
           {err && <Warn>{err}</Warn>}
 
-          <Layout>
-            <Card>
-              <div>
-                <H2>Metrics</H2>
-                <Muted>Simulated Breeder gravity vs assumed CEX float. Educational model — not a price oracle.</Muted>
-              </div>
+          <Dash>
+            <HeadRow>
+              <TitleBlock>
+                <Suit src="/gravity/kuma-suit.png" alt="" />
+                <div>
+                  <Title>
+                    Gravity
+                    <Formula>v = √(2GM/r)</Formula>
+                  </Title>
+                  <Sub>
+                    Mission phases track Breeder SHIB circ share reclaiming deep liquidity from CEX / institutional books.
+                  </Sub>
+                </div>
+              </TitleBlock>
+            </HeadRow>
 
+            <Body>
               <Compare>
                 <Side>
                   <strong>
@@ -691,82 +720,74 @@ export default function GravityPage() {
                   {fmtShib(effectiveShib)} · {fmtUsd(usd)}
                 </Side>
                 <Vs>VS</Vs>
-                <Side $align="right">
+                <Side>
                   <strong>
-                    CEX float
                     <Icon src="/gravity/shib.png" alt="" />
+                    CEX float
                   </strong>
                   {fmtShib(simCexFloat)} · {fmtUsd(simCexFloat * simPrice)}
                 </Side>
               </Compare>
 
-              <Metrics>
-                <Tile>
-                  <TileLabel>Δ vs live</TileLabel>
-                  <TileValue $tone={margins.deltaShib >= 0 ? 'up' : 'down'}>
-                    {margins.deltaShib >= 0 ? '+' : ''}
-                    {fmtShib(margins.deltaShib)}
-                  </TileValue>
-                  <TileHint>{fmtUsd(margins.deltaUsd)}</TileHint>
-                </Tile>
-                <Tile>
-                  <TileLabel>DEX mid move</TileLabel>
-                  <TileValue $tone={dexTone}>{fmtBps(margins.dexImpactBps)}</TileValue>
-                  <TileHint>~{fmtUsd(margins.illustrativeMidMoveUsd)}/SHIB</TileHint>
-                </Tile>
-                <Tile>
-                  <TileLabel>÷ CEX float</TileLabel>
-                  <TileValue>{fmtPct(margins.floatShare, 4)}</TileValue>
-                  <TileHint>book control</TileHint>
-                </Tile>
-                <Tile>
-                  <TileLabel>Δ float share</TileLabel>
-                  <TileValue $tone={margins.deltaVsFloat >= 0 ? 'up' : 'down'}>
-                    {fmtPct(margins.deltaVsFloat, 4)}
-                  </TileValue>
-                  <TileHint>vs live</TileHint>
-                </Tile>
-                <Tile>
-                  <TileLabel>Depth ×</TileLabel>
-                  <TileValue>{margins.depthMultiple.toFixed(2)}×</TileValue>
-                  <TileHint>vs ETH SHIB LP</TileHint>
-                </Tile>
-                <Tile>
-                  <TileLabel>√(2GM/r)</TileLabel>
-                  <TileValue>{margins.vNorm.toFixed(4)}</TileValue>
-                  <TileHint>{band}</TileHint>
-                </Tile>
-              </Metrics>
-
-              <Stack>
-                <Seg $pct={breederPctOfCirc} $color="#ff8502" />
-                <Seg $pct={cexPctOfCirc} $color="#fc72ff" />
-                <Seg $pct={otherPct} $color="#2a3145" />
-              </Stack>
-
               <div>
-                <H2 style={{ marginBottom: 8, fontSize: '0.85rem' }}>Metric key</H2>
-                <Key>
-                  {METRIC_KEY.map((k) => (
-                    <KeyItem key={k.id}>
-                      <KeyLabel>{k.label}</KeyLabel>
-                      <KeyMeaning>{k.meaning}</KeyMeaning>
-                    </KeyItem>
-                  ))}
-                </Key>
+                <Metrics>
+                  <Tile>
+                    <TileLabel>Δ vs live</TileLabel>
+                    <TileValue $tone={margins.deltaShib >= 0 ? 'up' : 'down'}>
+                      {margins.deltaShib >= 0 ? '+' : ''}
+                      {fmtShib(margins.deltaShib)}
+                    </TileValue>
+                    <TileHint>{fmtUsd(margins.deltaUsd)}</TileHint>
+                  </Tile>
+                  <Tile>
+                    <TileLabel>DEX mid move</TileLabel>
+                    <TileValue $tone={dexTone}>{fmtBps(margins.dexImpactBps)}</TileValue>
+                    <TileHint>~{fmtUsd(margins.illustrativeMidMoveUsd)}/SHIB</TileHint>
+                  </Tile>
+                  <Tile>
+                    <TileLabel>÷ CEX float</TileLabel>
+                    <TileValue>{fmtPct(margins.floatShare, 4)}</TileValue>
+                    <TileHint>book control</TileHint>
+                  </Tile>
+                  <Tile>
+                    <TileLabel>Δ float share</TileLabel>
+                    <TileValue $tone={margins.deltaVsFloat >= 0 ? 'up' : 'down'}>
+                      {fmtPct(margins.deltaVsFloat, 4)}
+                    </TileValue>
+                    <TileHint>vs live</TileHint>
+                  </Tile>
+                  <Tile>
+                    <TileLabel>Depth ×</TileLabel>
+                    <TileValue>{margins.depthMultiple.toFixed(2)}×</TileValue>
+                    <TileHint>vs ETH SHIB LP</TileHint>
+                  </Tile>
+                  <Tile>
+                    <TileLabel>√(2GM/r)</TileLabel>
+                    <TileValue>{margins.vNorm.toFixed(4)}</TileValue>
+                    <TileHint>{band}</TileHint>
+                  </Tile>
+                </Metrics>
+                <div style={{ marginTop: 8 }}>
+                  <Stack>
+                    <Seg $pct={breederPctOfCirc} $color="#ff8502" />
+                    <Seg $pct={cexPctOfCirc} $color="#fc72ff" />
+                    <Seg $pct={otherPct} $color="#2a3145" />
+                  </Stack>
+                </div>
               </div>
 
               <Controls>
-                <div>
-                  <LabelRow>
+                <Field $live={!dirty.breeder}>
+                  <FieldTop>
                     <Label>
                       <Icon src="/gravity/kuma.png" alt="" />
-                      Breeder SHIB {dirty.breeder ? '(sim)' : '(live)'}
+                      Breeder SHIB
+                      <LiveTag $on={!dirty.breeder}>{dirty.breeder ? 'SIM' : 'LIVE'}</LiveTag>
                     </Label>
-                    <Values>
-                      {fmtShib(simBreeder)} · {fmtPct(pctCirc, 5)} · live {fmtShib(liveBreeder)}
-                    </Values>
-                  </LabelRow>
+                    <ResetOne type="button" disabled={!dirty.breeder} onClick={() => resetField('breeder')}>
+                      Reset live
+                    </ResetOne>
+                  </FieldTop>
                   <Range
                     type="range"
                     $icon="/gravity/kuma.png"
@@ -780,119 +801,100 @@ export default function GravityPage() {
                       setSimBreeder(Number(e.target.value))
                     }}
                   />
-                  <Chips>
-                    <Chip
-                      type="button"
-                      $active={!dirty.breeder}
-                      onClick={() => {
-                        setSimBreeder(liveBreeder)
-                        setDirty((d) => ({ ...d, breeder: false }))
-                      }}
-                    >
-                      Live
-                    </Chip>
-                    {MISSIONS.map((m) => (
-                      <Chip
-                        key={m.id}
-                        type="button"
-                        $active={dirty.breeder && Math.abs(simBreeder - m.pctCirc * circ) / (m.pctCirc * circ || 1) < 0.02}
-                        onClick={() => {
-                          markDirty('breeder')
-                          setSimBreeder(m.pctCirc * circ)
-                        }}
-                      >
-                        {m.id}
-                      </Chip>
-                    ))}
-                  </Chips>
-                </div>
+                  <Values>
+                    {fmtShib(simBreeder)} · {fmtPct(pctCirc, 5)} · live {fmtShib(liveBreeder)}
+                  </Values>
+                </Field>
 
-                <Assumptions>
-                  <Field>
-                    <LabelRow>
-                      <Label>
-                        <Icon src="/gravity/shib.png" alt="" />
-                        Price
-                      </Label>
-                      <Values>${simPrice.toExponential(2)}</Values>
-                    </LabelRow>
-                    <Range
-                      type="range"
-                      $icon="/gravity/shib.png"
-                      $border="#fc72ff"
-                      min={1e-7}
-                      max={5e-5}
-                      step={1e-7}
-                      value={simPrice}
-                      onChange={(e) => {
-                        markDirty('price')
-                        setSimPrice(Number(e.target.value))
-                      }}
-                    />
-                  </Field>
-                  <Field>
-                    <LabelRow>
-                      <Label>
-                        <Icon src="/gravity/shib.png" alt="" />
-                        LP depth
-                      </Label>
-                      <Values>
-                        {fmtUsd(simLpDepth)} · {depthMultiple.toFixed(1)}×
-                      </Values>
-                    </LabelRow>
-                    <Range
-                      type="range"
-                      $icon="/gravity/shib.png"
-                      $border="#fc72ff"
-                      min={1e5}
-                      max={5e7}
-                      step={1e5}
-                      value={simLpDepth}
-                      onChange={(e) => {
-                        markDirty('lp')
-                        setSimLpDepth(Number(e.target.value))
-                      }}
-                    />
-                  </Field>
-                  <Field style={{ gridColumn: '1 / -1' }}>
-                    <LabelRow>
-                      <Label>
-                        <Icon src="/gravity/shib.png" alt="" />
-                        CEX float
-                      </Label>
-                      <Values>
-                        {fmtShib(simCexFloat)} · {fmtPct(cexPressured, 3)}
-                      </Values>
-                    </LabelRow>
-                    <Range
-                      type="range"
-                      $icon="/gravity/shib.png"
-                      $border="#fc72ff"
-                      min={1e12}
-                      max={200e12}
-                      step={1e12}
-                      value={simCexFloat}
-                      onChange={(e) => {
-                        markDirty('cex')
-                        setSimCexFloat(Number(e.target.value))
-                      }}
-                    />
-                  </Field>
-                </Assumptions>
+                <Field $live={!dirty.price}>
+                  <FieldTop>
+                    <Label>
+                      <Icon src="/gravity/shib.png" alt="" />
+                      Price
+                      <LiveTag $on={!dirty.price}>{dirty.price ? 'SIM' : 'LIVE'}</LiveTag>
+                    </Label>
+                    <ResetOne type="button" disabled={!dirty.price} onClick={() => resetField('price')}>
+                      Reset live
+                    </ResetOne>
+                  </FieldTop>
+                  <Range
+                    type="range"
+                    $icon="/gravity/shib.png"
+                    $border="#fc72ff"
+                    min={1e-7}
+                    max={5e-5}
+                    step={1e-7}
+                    value={simPrice}
+                    onChange={(e) => {
+                      markDirty('price')
+                      setSimPrice(Number(e.target.value))
+                    }}
+                  />
+                  <Values>
+                    ${simPrice.toExponential(2)} · live ${livePrice.toExponential(2)}
+                  </Values>
+                </Field>
 
-                <Muted>
-                  Live defaults refresh ~60s. {live?.priceSource || '—'} · {live?.priceAsOf || '—'} · next {activeMission.id}{' '}
-                  gap {fmtShib(activeMission.gap)}
-                </Muted>
+                <Field $live={!dirty.lp}>
+                  <FieldTop>
+                    <Label>
+                      <Icon src="/gravity/shib.png" alt="" />
+                      LP depth
+                      <LiveTag $on={!dirty.lp}>{dirty.lp ? 'SIM' : 'LIVE'}</LiveTag>
+                    </Label>
+                    <ResetOne type="button" disabled={!dirty.lp} onClick={() => resetField('lp')}>
+                      Reset live
+                    </ResetOne>
+                  </FieldTop>
+                  <Range
+                    type="range"
+                    $icon="/gravity/shib.png"
+                    $border="#fc72ff"
+                    min={1e5}
+                    max={5e7}
+                    step={1e5}
+                    value={simLpDepth}
+                    onChange={(e) => {
+                      markDirty('lp')
+                      setSimLpDepth(Number(e.target.value))
+                    }}
+                  />
+                  <Values>
+                    {fmtUsd(simLpDepth)} · {depthMultiple.toFixed(1)}× · live {fmtUsd(liveLpDepth)}
+                  </Values>
+                </Field>
+
+                <Field $live={!dirty.cex}>
+                  <FieldTop>
+                    <Label>
+                      <Icon src="/gravity/shib.png" alt="" />
+                      CEX float
+                      <LiveTag $on={!dirty.cex}>{dirty.cex ? 'SIM' : 'LIVE'}</LiveTag>
+                    </Label>
+                    <ResetOne type="button" disabled={!dirty.cex} onClick={() => resetField('cex')}>
+                      Reset live
+                    </ResetOne>
+                  </FieldTop>
+                  <Range
+                    type="range"
+                    $icon="/gravity/shib.png"
+                    $border="#fc72ff"
+                    min={1e12}
+                    max={200e12}
+                    step={1e12}
+                    value={simCexFloat}
+                    onChange={(e) => {
+                      markDirty('cex')
+                      setSimCexFloat(Number(e.target.value))
+                    }}
+                  />
+                  <Values>
+                    {fmtShib(simCexFloat)} · {fmtPct(cexPressured, 3)} · live {fmtShib(liveCexFloat)}
+                  </Values>
+                </Field>
               </Controls>
-            </Card>
 
-            <Card>
-              <div>
-                <H2>Mission phases</H2>
-                <Muted>Circ-marketshare milestones reclaiming discovery from CEX / off-chain marketmakers.</Muted>
-              </div>
-              <MissionList>
+              <Missions>
                 {missions.map((m) => (
                   <Mission
                     key={m.id}
@@ -903,32 +905,52 @@ export default function GravityPage() {
                       markDirty('breeder')
                       setSimBreeder(m.pctCirc * circ)
                     }}
+                    title={m.blurb}
                   >
-                    <MissionTop>
-                      <MissionName>
-                        <span>
-                          {m.id} {m.code}
-                        </span>
-                        {m.title}
-                      </MissionName>
-                      <MissionPct>
-                        {(m.pctCirc * 100).toFixed(m.pctCirc < 0.01 ? 1 : 0)}% · {(m.progress * 100).toFixed(0)}%
-                      </MissionPct>
-                    </MissionTop>
-                    <MissionBlurb>
-                      {m.blurb}
-                      {!m.done ? ` Gap ${fmtShib(m.gap)}.` : ' Cleared.'}
-                    </MissionBlurb>
+                    <MissionId>
+                      {m.id} · {m.code}
+                    </MissionId>
+                    <MissionTitle>{m.title}</MissionTitle>
+                    <MissionPct>
+                      {(m.pctCirc * 100).toFixed(m.pctCirc < 0.01 ? 1 : 0)}% circ · {(m.progress * 100).toFixed(0)}%
+                      {!m.done ? ` · gap ${fmtShib(m.gap)}` : ' · cleared'}
+                    </MissionPct>
                     <Track>
                       <Fill $pct={m.progress * 100} $done={m.done} />
                     </Track>
                   </Mission>
                 ))}
-              </MissionList>
-            </Card>
-          </Layout>
+              </Missions>
+            </Body>
+
+            <Foot>
+              Live snapshots refresh ~60s · {live?.priceSource || '—'} · {live?.priceAsOf || '—'} · circ {fmtShib(circ)} ·
+              fetched {live?.fetchedAt ? new Date(live.fetchedAt).toLocaleTimeString() : '—'}
+            </Foot>
+          </Dash>
         </Page>
       </Main>
+
+      {keyOpen && (
+        <Overlay onClick={() => setKeyOpen(false)}>
+          <Modal onClick={(e) => e.stopPropagation()}>
+            <ModalTitle>Metric key</ModalTitle>
+            <KeyList>
+              {METRIC_KEY.map((k) => (
+                <KeyRow key={k.id}>
+                  <KeyLabel>{k.label}</KeyLabel>
+                  <KeyMeaning>{k.meaning}</KeyMeaning>
+                </KeyRow>
+              ))}
+            </KeyList>
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <Btn $primary type="button" onClick={() => setKeyOpen(false)}>
+                Close
+              </Btn>
+            </div>
+          </Modal>
+        </Overlay>
+      )}
     </App>
   )
 }
