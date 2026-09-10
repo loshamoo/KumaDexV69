@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Head from 'next/head'
 import Header from '../src/components/Header'
+import CoachMarks from '../src/components/CoachMarks'
 import styled, { css } from 'styled-components'
 
 const SHIB_CIRC_DEFAULT = 589.239e12
@@ -21,6 +22,51 @@ const METRIC_KEY = [
   { id: 'v', label: '√(2GM/r)', meaning: 'Normalized escape score — M = Breeder USD, r = circ × price.' },
   { id: 'bar', label: 'Supply bar', meaning: 'Orange = Breeder, pink = CEX float proxy, slate = rest of circ.' },
   { id: 'mission', label: 'Mission %', meaning: 'Progress to each circ-marketshare milestone (K1–K5).' }
+]
+
+const ZERO_GRAVITY_COACH_STEPS = [
+  {
+    target: '#zg-title',
+    title: 'Zero-Gravity Indicator',
+    description:
+      'Educational escape-velocity model for Breeder-held SHIB reclaiming liquidity from CEX / institutional books. Not a price oracle — a mission dashboard.',
+    placement: 'bottom'
+  },
+  {
+    target: '#zg-compare',
+    title: 'Breeder vs CEX float',
+    description:
+      'Left is on-chain Breeder SHIB (supply + TVL). Right is the assumed CEX / institutional float. The gap between them is the gravity story.',
+    placement: 'bottom'
+  },
+  {
+    target: '#zg-metrics',
+    title: 'Impact metrics',
+    description:
+      'Δ vs live, toy DEX mid move, depth multiple, and √(2GM/r) escape score update as you simulate. Supply bar under the tiles shows Breeder / CEX / rest of circ.',
+    placement: 'bottom'
+  },
+  {
+    target: '#zg-zero-tile',
+    title: 'Zero-Gravity',
+    description:
+      'Breeder SHIB ÷ assumed CEX float — your on-chain share of off-chain books. Hint shows Δ vs the live Breeder snapshot.',
+    placement: 'bottom'
+  },
+  {
+    target: '#zg-controls',
+    title: 'Simulate live inputs',
+    description:
+      'Drag Breeder SHIB, price, LP depth, or CEX float. LIVE tracks the ~60s API refresh; SIM means you overrode that field. Reset live snaps it back.',
+    placement: 'top'
+  },
+  {
+    target: '#zg-missions',
+    title: 'Mission phases K1–K5',
+    description:
+      'Tap a mission to jump Breeder SHIB to that circ-marketshare target — Ignition → Co-Dominance. Progress bars show how close you are.',
+    placement: 'top'
+  }
 ]
 
 const thumb = (icon, border) => css`
@@ -720,7 +766,7 @@ export default function GravityPage() {
 {err && <Warn>{err}</Warn>}
 
           <Dash>
-            <HeadRow>
+            <HeadRow id="zg-title">
               <Title>
                 Zero-Gravity Indicator
                 <Formula>v = √(2GM/r)</Formula>
@@ -731,7 +777,7 @@ export default function GravityPage() {
             </HeadRow>
 
             <Body>
-              <Compare>
+              <Compare id="zg-compare">
                 <Side>
                   <SideTitle>
                     <Icon src="/gravity/kuma.png" alt="" />
@@ -764,7 +810,7 @@ export default function GravityPage() {
               </Compare>
 
               <div>
-                <Metrics>
+                <Metrics id="zg-metrics">
                   <Tile>
                     <TileLabel>Δ vs live</TileLabel>
                     <TileValue $tone={margins.deltaShib >= 0 ? 'up' : 'down'}>
@@ -778,7 +824,7 @@ export default function GravityPage() {
                     <TileValue $tone={dexTone}>{fmtMovePct(margins.dexImpactBps)}</TileValue>
                     <TileHint>~{fmtUsd(margins.illustrativeMidMoveUsd)}/SHIB</TileHint>
                   </Tile>
-                  <Tile>
+                  <Tile id="zg-zero-tile">
                     <TileLabel>Zero-Gravity</TileLabel>
                     <TileValue>{fmtPct(margins.floatShare, 2)}</TileValue>
                     <TileHint>
@@ -806,7 +852,7 @@ export default function GravityPage() {
               </div>
 
               <BottomStack>
-              <Controls>
+              <Controls id="zg-controls">
                 <Field $live={!dirty.breeder}>
                   <FieldTop>
                     <Label>
@@ -924,7 +970,7 @@ export default function GravityPage() {
                 </Field>
               </Controls>
 
-              <Missions>
+              <Missions id="zg-missions">
                 {missions.map((m) => (
                   <Mission
                     key={m.id}
@@ -961,6 +1007,14 @@ export default function GravityPage() {
           </Dash>
         </Page>
       </Main>
+
+      <CoachMarks
+        id="zero-gravity"
+        welcomeTitle="Welcome to Zero-Gravity"
+        welcomeDescription="Tour the tools that track Breeder SHIB reclaiming liquidity from CEX books — compare, Zero-Gravity share, sim sliders, and K1–K5 missions."
+        welcomeLogo="/gravity/kuma.png"
+        steps={ZERO_GRAVITY_COACH_STEPS}
+      />
     </App>
   )
 }
