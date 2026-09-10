@@ -16,8 +16,7 @@ const MISSIONS = [
 const METRIC_KEY = [
   { id: 'delta', label: 'Δ vs live', meaning: 'Simulated Breeder SHIB minus the live on-chain balance.' },
   { id: 'mid', label: 'DEX mid move', meaning: 'Toy √impact as % if Δ notional hit assumed ETH DEX SHIB LP depth.' },
-  { id: 'float', label: '÷ CEX float', meaning: 'Breeder SHIB as a share of assumed CEX / institutional float.' },
-  { id: 'dfloat', label: 'Δ float share', meaning: 'Change in that float share versus live Breeder.' },
+  { id: 'zero', label: 'Zero-Gravity', meaning: 'Breeder SHIB ÷ assumed CEX / institutional float — on-chain share vs off-chain books.' },
   { id: 'depth', label: 'Depth ×', meaning: 'Breeder SHIB USD ÷ assumed ETH DEX SHIB LP depth.' },
   { id: 'v', label: '√(2GM/r)', meaning: 'Normalized escape score — M = Breeder USD, r = circ × price.' },
   { id: 'bar', label: 'Supply bar', meaning: 'Orange = Breeder, pink = CEX float proxy, slate = rest of circ.' },
@@ -225,7 +224,7 @@ const Vs = styled.span`
 
 const Metrics = styled.div`
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
   @media (max-width: 900px) {
     grid-template-columns: repeat(3, 1fr);
@@ -712,8 +711,8 @@ export default function GravityPage() {
   return (
     <App>
       <Head>
-        <title>Gravity | KumaDex</title>
-        <meta name="description" content="Gravity mission phases — reclaim SHIB deep liquidity from CEX books. v = √(2GM/r)." />
+        <title>Zero-Gravity Indicator | KumaDex</title>
+        <meta name="description" content="Zero-Gravity Indicator — Breeder SHIB vs CEX float, mission phases K1–K5. v = √(2GM/r)." />
       </Head>
       <Header />
       <Main>
@@ -723,7 +722,7 @@ export default function GravityPage() {
           <Dash>
             <HeadRow>
               <Title>
-                Gravity
+                Zero-Gravity Indicator
                 <Formula>v = √(2GM/r)</Formula>
               </Title>
               <Sub>
@@ -780,16 +779,11 @@ export default function GravityPage() {
                     <TileHint>~{fmtUsd(margins.illustrativeMidMoveUsd)}/SHIB</TileHint>
                   </Tile>
                   <Tile>
-                    <TileLabel>÷ CEX float</TileLabel>
+                    <TileLabel>Zero-Gravity</TileLabel>
                     <TileValue>{fmtPct(margins.floatShare, 2)}</TileValue>
-                    <TileHint>book control</TileHint>
-                  </Tile>
-                  <Tile>
-                    <TileLabel>Δ float share</TileLabel>
-                    <TileValue $tone={margins.deltaVsFloat >= 0 ? 'up' : 'down'}>
-                      {fmtMovePct(margins.deltaVsFloat, 2)}
-                    </TileValue>
-                    <TileHint>vs live</TileHint>
+                    <TileHint>
+                      Δ {fmtMovePct(margins.deltaVsFloat, 2)} vs live
+                    </TileHint>
                   </Tile>
                   <Tile>
                     <TileLabel>Depth ×</TileLabel>

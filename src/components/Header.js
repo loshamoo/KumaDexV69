@@ -968,7 +968,7 @@ const Header = () => {
               }}
               style={isActive('/gravity') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
             >
-              Gravity
+              Zero-Gravity
             </DropdownItem>
             <DropdownItem
               href="/meme-liquidity"
