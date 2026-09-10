@@ -185,7 +185,7 @@ const TokenDDBtn = styled.button`
   font-weight: 600;
   line-height: 1;
   outline: none;
-  max-width: 148px;
+  max-width: 88px;
   &:hover,
   &:focus-visible {
     border-color: rgba(252, 114, 255, 0.45);
@@ -200,19 +200,9 @@ const TokenDDMeta = styled.span`
   text-align: left;
   min-width: 0;
   strong {
-    font-size: 0.72rem;
+    font-size: 0.78rem;
     font-weight: 700;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 92px;
-  }
-  small {
-    font-size: 0.55rem;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    color: ${({ theme }) => theme.colors.text.tertiary};
   }
 `
 
@@ -226,7 +216,7 @@ const TokenDDMenu = styled.div`
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  min-width: 168px;
+  min-width: 112px;
   padding: 4px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -252,14 +242,8 @@ const TokenDDItem = styled.button`
     background: rgba(255, 255, 255, 0.06);
   }
   strong {
-    display: block;
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     font-weight: 700;
-  }
-  small {
-    display: block;
-    font-size: 0.6rem;
-    color: ${({ theme }) => theme.colors.text.tertiary};
   }
 `
 
@@ -938,8 +922,7 @@ export default function GravityPage() {
                         >
                           <Icon $sm src={tokenLogo} alt="" />
                           <TokenDDMeta>
-                            <strong>{TOKEN_DEFAULTS[token].title}</strong>
-                            <small>{token}</small>
+                            <strong>{token}</strong>
                           </TokenDDMeta>
                           <TokenDDChevron>{tokenMenuOpen ? '▴' : '▾'}</TokenDDChevron>
                         </TokenDDBtn>
@@ -955,10 +938,7 @@ export default function GravityPage() {
                                 onClick={() => selectToken(s)}
                               >
                                 <Icon $sm src={TOKEN_DEFAULTS[s].logo} alt="" />
-                                <span>
-                                  <strong>{s}</strong>
-                                  <small>{TOKEN_DEFAULTS[s].title}</small>
-                                </span>
+                                <strong>{s}</strong>
                               </TokenDDItem>
                             ))}
                           </TokenDDMenu>
