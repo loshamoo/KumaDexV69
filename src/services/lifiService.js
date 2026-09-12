@@ -3,13 +3,18 @@
 
 import { ethers } from 'ethers';
 import { LIFI_DIAMOND_ADDRESS, LIFI_DIAMOND_ABI, ERC20_ABI } from '../contracts/LiFiDiamondABI';
+import {
+  getFeeRecipient,
+  FEE_PERCENT,
+  INTEGRATOR,
+  FEE_CONFIG,
+} from '../config/feeRecipients';
 
 const LIFI_API_BASE = 'https://li.quest/v1';
 
-// KumaDex Integrator Configuration
-const KUMADEX_INTEGRATOR = 'kumadex';
-const KUMADEX_FEE_RECIPIENT = '0x15305A9c292B4e38B3154f6bfa54841A84C92922';
-const KUMADEX_FEE_PERCENT = 0.003; // 0.3% integrator fee
+// KumaDex Integrator Configuration (cutover via feeRecipients.js)
+const KUMADEX_INTEGRATOR = INTEGRATOR;
+const KUMADEX_FEE_PERCENT = FEE_PERCENT;
 
 // Supported chains for LI.FI
 export const SUPPORTED_CHAINS = {
@@ -21,7 +26,78 @@ export const SUPPORTED_CHAINS = {
   43114: { name: 'Avalanche', symbol: 'AVAX', logo: '/chainlogos/avalanche.png' },
   250: { name: 'Fantom', symbol: 'FTM', logo: '/chainlogos/fantom.png' },
   8453: { name: 'Base', symbol: 'ETH', logo: '/chainlogos/base.png' },
+  // Robinhood Chain — EVM L2 (Arbitrum stack); LiFi key `out`
+  4663: { name: 'Robinhood Chain', symbol: 'ETH', logo: '/chainlogos/robinhood.svg' },
+  // Solana SVM — LiFi key `sol`
+  1151111081099710: { name: 'Solana', symbol: 'SOL', logo: '/chainlogos/solana.png' },
 };
+
+export const SOLANA_CHAIN_ID = 1151111081099710;
+
+export function isSolanaChain(chainId) {
+  if (chainId === undefined || chainId === null) return false;
+  if (Number(chainId) === SOLANA_CHAIN_ID) return true;
+  const key = String(chainId).toLowerCase();
+  return key === 'sol' || key === 'solana' || key === String(SOLANA_CHAIN_ID);
+}
+
+/** MetaMask / wallet_addEthereumChain params for supported EVM nets */
+export const CHAIN_ADD_PARAMS = {
+  1: {
+    chainId: '0x1',
+    chainName: 'Ethereum Mainnet',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: ['https://ethereum.publicnode.com'],
+    blockExplorerUrls: ['https://etherscan.io'],
+  },
+  4663: {
+    chainId: '0x1237',
+    chainName: 'Robinhood Chain',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: ['https://rpc.mainnet.chain.robinhood.com/'],
+    blockExplorerUrls: ['https://robinhoodchain.blockscout.com/'],
+  },
+  8453: {
+    chainId: '0x2105',
+    chainName: 'Base',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: ['https://mainnet.base.org'],
+    blockExplorerUrls: ['https://basescan.org'],
+  },
+  42161: {
+    chainId: '0xa4b1',
+    chainName: 'Arbitrum One',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: ['https://arb1.arbitrum.io/rpc'],
+    blockExplorerUrls: ['https://arbiscan.io'],
+  },
+};
+
+/**
+ * Switch wallet to chainId; add Robinhood (or other) if missing (4902).
+ */
+export async function ensureWalletChain(chainId) {
+  if (typeof window === 'undefined' || !window.ethereum) {
+    throw new Error('No EVM wallet detected');
+  }
+  const hex = '0x' + Number(chainId).toString(16);
+  try {
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: hex }],
+    });
+    return true;
+  } catch (err) {
+    if (err && (err.code === 4902 || err.code === -32603) && CHAIN_ADD_PARAMS[chainId]) {
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [CHAIN_ADD_PARAMS[chainId]],
+      });
+      return true;
+    }
+    throw err;
+  }
+}
 
 // Native token addresses (zero address represents native token)
 const NATIVE_TOKEN = '0x0000000000000000000000000000000000000000';
@@ -53,7 +129,9 @@ export async function getQuote({
   toToken,
   fromAmount,
   fromAddress,
+  toAddress,
   slippage = 0.5,
+  skipFee = false,
 }) {
   try {
     const params = new URLSearchParams({
@@ -65,13 +143,33 @@ export async function getQuote({
       fromAddress: fromAddress,
       slippage: (slippage / 100).toString(),
       integrator: KUMADEX_INTEGRATOR,
-      fee: KUMADEX_FEE_PERCENT.toString(),
-      referrer: KUMADEX_FEE_RECIPIENT,
+      referrer: getFeeRecipient(),
     });
+    if (toAddress) {
+      params.set('toAddress', toAddress);
+    }
+    if (!skipFee) {
+      params.set('fee', KUMADEX_FEE_PERCENT.toString());
+    }
 
     const response = await fetch(`${LIFI_API_BASE}/quote?${params}`);
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
+      // SVM quotes reject unconfigured integrator fees (code 1011). Retry without fee.
+      const solanaInvolved = isSolanaChain(fromChainId) || isSolanaChain(toChainId);
+      if (!skipFee && solanaInvolved && (error.code === 1011 || /not configured for collecting fees/i.test(error.message || ''))) {
+        return getQuote({
+          fromChainId,
+          toChainId,
+          fromToken,
+          toToken,
+          fromAmount,
+          fromAddress,
+          toAddress,
+          slippage,
+          skipFee: true,
+        });
+      }
       throw new Error(error.message || 'Failed to get quote');
     }
 
@@ -107,7 +205,7 @@ export async function getRoutes({
         slippage: slippage / 100,
         integrator: KUMADEX_INTEGRATOR,
         fee: KUMADEX_FEE_PERCENT,
-        referrer: KUMADEX_FEE_RECIPIENT,
+        referrer: getFeeRecipient(),
         order: 'RECOMMENDED',
         allowSwitchChain: false,
       },
@@ -249,6 +347,8 @@ export function parseTokenAmount(amount, decimals) {
  * Check if address is native token
  */
 export function isNativeToken(address) {
+  if (!address) return false;
+  if (address === '11111111111111111111111111111111') return true;
   return address === NATIVE_TOKEN || address.toLowerCase() === NATIVE_TOKEN_ALT.toLowerCase();
 }
 
@@ -265,23 +365,22 @@ export function getExplorerUrl(chainId, txHash) {
     43114: 'https://snowtrace.io/tx/',
     250: 'https://ftmscan.com/tx/',
     8453: 'https://basescan.org/tx/',
+    4663: 'https://robinhoodchain.blockscout.com/tx/',
+    1151111081099710: 'https://solscan.io/tx/',
   };
 
   const baseUrl = explorers[chainId] || 'https://etherscan.io/tx/';
   return `${baseUrl}${txHash}`;
 }
 
-// Export fee configuration for UI display
-export const FEE_CONFIG = {
-  integrator: KUMADEX_INTEGRATOR,
-  feeRecipient: KUMADEX_FEE_RECIPIENT,
-  feePercent: KUMADEX_FEE_PERCENT,
-  feePercentDisplay: `${(KUMADEX_FEE_PERCENT * 100).toFixed(1)}%`,
-};
+// Re-export fee configuration for UI display (cutover-aware)
+export { FEE_CONFIG, getFeeRecipient };
 
 export default {
   SUPPORTED_CHAINS,
+  CHAIN_ADD_PARAMS,
   FEE_CONFIG,
+  getFeeRecipient,
   getTokensForChain,
   getQuote,
   getRoutes,
@@ -292,4 +391,7 @@ export default {
   parseTokenAmount,
   isNativeToken,
   getExplorerUrl,
+  ensureWalletChain,
+  isSolanaChain,
+  SOLANA_CHAIN_ID,
 };

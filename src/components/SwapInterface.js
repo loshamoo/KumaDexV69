@@ -7,7 +7,7 @@ import TokenModal from './TokenModal';
 import SwapSettings from './SwapSettings';
 import SwapDetails from './SwapDetails';
 import BreederNotification from './BreederNotification';
-import { KUMABREEDER_TOKENS } from '../data/tokens';
+import { KUMABREEDER_TOKENS, SOLANA_NATIVE_TOKEN, isSolanaToken } from '../data/tokens';
 
 const SwapContainer = styled.div`
   background: #1a1f2e;
@@ -342,6 +342,26 @@ const SwapInterface = ({ leverage = 1, leverageControls, selectedPool = null, on
     }
   };
 
+  const applyChainToken = (chain, currentToken, setToken) => {
+    if (chain?.id === 'sol' || chain?.id === 'solana') {
+      if (!isSolanaToken(currentToken)) {
+        setToken(SOLANA_NATIVE_TOKEN);
+      }
+    } else if (isSolanaToken(currentToken)) {
+      setToken(KUMABREEDER_TOKENS[0]);
+    }
+  };
+
+  const handleFromChainChange = (chain) => {
+    setFromChain(chain);
+    applyChainToken(chain, fromToken, setFromToken);
+  };
+
+  const handleToChainChange = (chain) => {
+    setToChain(chain);
+    applyChainToken(chain, toToken, setToToken);
+  };
+
   const handleSwapTokens = useCallback(() => {
     // Swap tokens
     const tempToken = fromToken;
@@ -461,7 +481,7 @@ const SwapInterface = ({ leverage = 1, leverageControls, selectedPool = null, on
             onTokenSelect={() => setIsFromModalOpen(true)}
             balance={balance}
             chain={fromChain}
-            onChainChange={setFromChain}
+            onChainChange={handleFromChainChange}
             hideChainSelector={hideChainSelector}
           />
           <ArrowContainer>
@@ -477,7 +497,7 @@ const SwapInterface = ({ leverage = 1, leverageControls, selectedPool = null, on
             onTokenSelect={() => setIsToModalOpen(true)}
             readOnly
             chain={toChain}
-            onChainChange={setToChain}
+            onChainChange={handleToChainChange}
             hideChainSelector={hideChainSelector}
           />
 
@@ -538,6 +558,7 @@ const SwapInterface = ({ leverage = 1, leverageControls, selectedPool = null, on
         onClose={() => setIsFromModalOpen(false)}
         onSelectToken={setFromToken}
         selectedToken={fromToken}
+        chain={fromChain}
       />
       
       <TokenModal
@@ -545,6 +566,7 @@ const SwapInterface = ({ leverage = 1, leverageControls, selectedPool = null, on
         onClose={() => setIsToModalOpen(false)}
         onSelectToken={setToToken}
         selectedToken={toToken}
+        chain={toChain}
       />
       
       <SwapSettings

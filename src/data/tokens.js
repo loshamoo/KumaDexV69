@@ -375,3 +375,57 @@ export const ETHEREUM_TOKENS = [
     isLP: true,
   },
 ];
+
+
+export const SOLANA_NATIVE = '11111111111111111111111111111111';
+export const SOLANA_WSOL = 'So11111111111111111111111111111111111111112';
+export const SOLANA_USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+export const SOLANA_USDT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
+
+export const SOLANA_TOKENS = [
+  {
+    symbol: 'SOL',
+    name: 'Solana',
+    decimals: 9,
+    address: SOLANA_NATIVE,
+    logo: '/chainlogos/solana.png',
+    coingeckoId: 'solana',
+    chain: 'sol',
+  },
+  {
+    symbol: 'USDC',
+    name: 'USD Coin',
+    decimals: 6,
+    address: SOLANA_USDC,
+    logo: '/breederlogos/usdc.png',
+    coingeckoId: 'usd-coin',
+    chain: 'sol',
+  },
+  {
+    symbol: 'USDT',
+    name: 'Tether',
+    decimals: 6,
+    address: SOLANA_USDT,
+    logo: 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
+    coingeckoId: 'tether',
+    chain: 'sol',
+  },
+  {
+    symbol: 'wSOL',
+    name: 'Wrapped SOL',
+    decimals: 9,
+    address: SOLANA_WSOL,
+    logo: '/chainlogos/solana.png',
+    coingeckoId: 'wrapped-solana',
+    chain: 'sol',
+  },
+];
+
+export const SOLANA_NATIVE_TOKEN = SOLANA_TOKENS[0];
+
+export function isSolanaToken(token) {
+  if (!token) return false;
+  if (token.chain === 'sol') return true;
+  const addr = token.address || '';
+  return addr.length >= 32 && !addr.startsWith('0x') && !addr.startsWith('0X');
+}

@@ -1,8 +1,15 @@
 import styled from 'styled-components';
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { getQuote, executeSwap, checkAndApproveToken, getExplorerUrl, isNativeToken } from '../services/lifiService';
-import { LIFI_DIAMOND_ADDRESS } from '../contracts/LiFiDiamondABI';
+import { getQuote, executeSwap, checkAndApproveToken, getExplorerUrl, isNativeToken, ensureWalletChain } from '../services/lifiService';
+import {
+  isSolanaChain,
+  resolveLifiTokenAddress,
+  resolveTokenDecimals,
+  parseAmountToBase,
+  executeSolanaSwap,
+} from '../services/lifiSolana';
+import { connectPhantom } from '../services/solanaWallet';
 
 const Button = styled.button`
   width: 100%;
@@ -67,7 +74,7 @@ const TxLink = styled.a`
   }
 `;
 
-// Chain ID mapping
+// Chain ID mapping (LiFi numeric ids)
 const CHAIN_ID_MAP = {
   'eth': 1,
   'polygon': 137,
@@ -77,7 +84,21 @@ const CHAIN_ID_MAP = {
   'ftm': 250,
   'base': 8453,
   'op': 10,
+  'out': 4663,
+  'robinhood': 4663,
+  'sol': 1151111081099710,
+  'solana': 1151111081099710,
 };
+
+async function getEvmAddress() {
+  if (!window.ethereum) {
+    throw new Error('Please install MetaMask to swap on EVM chains');
+  }
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
+  const userAddress = await signer.getAddress();
+  return { provider, signer, userAddress };
+}
 
 const SwapButton = ({
   isConnected,
@@ -108,63 +129,78 @@ const SwapButton = ({
   }, [fromAmount, toAmount, fromToken, toToken]);
 
   const handleSwap = async () => {
-    if (!isConnected || !fromAmount || !fromToken || !toToken) return;
+    if (!fromAmount || !fromToken || !toToken) return;
 
     setIsSwapping(true);
     setSwapStatus('connecting');
     setError(null);
 
     try {
-      // Check if MetaMask is available
-      if (!window.ethereum) {
-        throw new Error('Please install MetaMask to swap tokens');
-      }
-
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner();
-      const userAddress = await signer.getAddress();
-
-      // Get chain IDs
       const fromChainId = CHAIN_ID_MAP[fromChain?.id] || 1;
       const toChainId = CHAIN_ID_MAP[toChain?.id] || 1;
+      const fromIsSol = isSolanaChain(fromChainId);
+      const toIsSol = isSolanaChain(toChainId);
 
-      // Check if we're on the correct network
-      const network = await provider.getNetwork();
-      if (network.chainId !== fromChainId) {
-        setSwapStatus('switching-network');
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: `0x${fromChainId.toString(16)}` }],
-          });
-        } catch (switchError) {
-          throw new Error(`Please switch to the correct network`);
+      const fromTokenAddress = resolveLifiTokenAddress(fromToken, fromChainId);
+      const toTokenAddress = resolveLifiTokenAddress(toToken, toChainId);
+      const decimals = resolveTokenDecimals(fromToken, fromChainId);
+      const fromAmountWei = parseAmountToBase(fromAmount, decimals);
+
+      let fromAddress;
+      let toAddress;
+      let evmSigner = null;
+
+      if (fromIsSol) {
+        // Solana → * : Phantom signs the LiFi SVM tx
+        setSwapStatus('connecting-phantom');
+        fromAddress = await connectPhantom();
+        if (toIsSol) {
+          toAddress = fromAddress;
+        } else {
+          // dest EVM wallet
+          if (!window.ethereum) {
+            throw new Error('Connect MetaMask for the EVM destination address');
+          }
+          const evm = await getEvmAddress();
+          toAddress = evm.userAddress;
+        }
+      } else {
+        // EVM → * : MetaMask / ethers (unchanged Diamond path, incl. Robinhood 4663)
+        if (!window.ethereum) {
+          throw new Error('Please install MetaMask to swap tokens');
+        }
+        const evm = await getEvmAddress();
+        evmSigner = evm.signer;
+        fromAddress = evm.userAddress;
+
+        const network = await evm.provider.getNetwork();
+        if (network.chainId !== fromChainId) {
+          setSwapStatus('switching-network');
+          try {
+            await ensureWalletChain(fromChainId);
+          } catch (switchError) {
+            throw new Error('Please switch to the correct network (add Robinhood Chain if prompted)');
+          }
+        }
+
+        if (toIsSol) {
+          setSwapStatus('connecting-phantom');
+          toAddress = await connectPhantom();
+        } else {
+          toAddress = fromAddress;
         }
       }
 
-      // Get token addresses (handle native tokens)
-      const fromTokenAddress = isNativeToken(fromToken.address) || fromToken.address === '0x0000000000000000000000000000000000000000'
-        ? '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
-        : fromToken.address;
-
-      const toTokenAddress = isNativeToken(toToken.address) || toToken.address === '0x0000000000000000000000000000000000000000'
-        ? '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
-        : toToken.address;
-
-      // Parse amount to wei
-      const decimals = fromToken.decimals || 18;
-      const fromAmountWei = ethers.utils.parseUnits(fromAmount.toString(), decimals).toString();
-
       setSwapStatus('getting-quote');
 
-      // Get quote from LiFi
       const quote = await getQuote({
         fromChainId,
         toChainId,
         fromToken: fromTokenAddress,
         toToken: toTokenAddress,
         fromAmount: fromAmountWei,
-        fromAddress: userAddress,
+        fromAddress,
+        toAddress,
         slippage,
       });
 
@@ -172,19 +208,22 @@ const SwapButton = ({
         throw new Error('Could not get swap quote. Try a different amount or token pair.');
       }
 
-      // Check and approve token if needed (for non-native tokens)
-      if (!isNativeToken(fromTokenAddress) && fromTokenAddress !== '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
-        setSwapStatus('approving');
-        const approval = await checkAndApproveToken(signer, fromToken.address, fromAmountWei);
-        if (approval.hash) {
-          console.log('Approval tx:', approval.hash);
+      let result;
+      if (fromIsSol) {
+        setSwapStatus('swapping');
+        result = await executeSolanaSwap(quote);
+      } else {
+        // EVM execute — same as before (approval + Diamond send)
+        if (!isNativeToken(fromTokenAddress) && fromTokenAddress !== '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
+          setSwapStatus('approving');
+          const approval = await checkAndApproveToken(evmSigner, fromToken.address, fromAmountWei);
+          if (approval.hash) {
+            console.log('Approval tx:', approval.hash);
+          }
         }
+        setSwapStatus('swapping');
+        result = await executeSwap(evmSigner, quote);
       }
-
-      setSwapStatus('swapping');
-
-      // Execute the swap
-      const result = await executeSwap(signer, quote);
 
       setTxHash(result.hash);
       setSwapStatus('success');
@@ -199,12 +238,15 @@ const SwapButton = ({
     }
   };
 
+  const fromIsSol = isSolanaChain(CHAIN_ID_MAP[fromChain?.id]);
+
   const getButtonText = () => {
-    if (!isConnected) return 'Connect Wallet';
+    if (!fromIsSol && !isConnected) return 'Connect Wallet';
     if (!fromAmount || parseFloat(fromAmount) === 0) return 'Enter an amount';
     if (isSwapping) {
       switch (swapStatus) {
         case 'connecting': return 'Connecting...';
+        case 'connecting-phantom': return 'Connect Phantom...';
         case 'switching-network': return 'Switch Network...';
         case 'getting-quote': return 'Getting Quote...';
         case 'approving': return 'Approving Token...';
@@ -223,7 +265,7 @@ const SwapButton = ({
     return 'Swap';
   };
 
-  const isDisabled = !isConnected || !fromAmount || parseFloat(fromAmount) === 0;
+  const isDisabled = (!fromIsSol && !isConnected) || !fromAmount || parseFloat(fromAmount) === 0;
 
   return (
     <>
@@ -271,3 +313,4 @@ const SwapButton = ({
 };
 
 export default SwapButton;
+export { CHAIN_ID_MAP };

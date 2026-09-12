@@ -93,12 +93,15 @@ const VerificationIcon = styled(Check)`
 
 const SUPPORTED_CHAINS = [
   { id: 'eth', name: 'Ethereum', abbr: 'ETH', logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', color: '#627eea' },
-  { id: 'sol', name: 'Solana', abbr: 'SOL', logo: 'https://assets.coingecko.com/coins/images/4128/small/solana.png', color: '#9945ff' },
+  { id: 'sol', name: 'Solana', abbr: 'SOL', logo: '/chainlogos/solana.png', color: '#9945ff' },
   { id: 'polygon', name: 'Polygon', abbr: 'MATIC', logo: 'https://assets.coingecko.com/coins/images/4713/small/polygon.png', color: '#8247e5' },
   { id: 'bnb', name: 'BNB Chain', abbr: 'BNB', logo: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png', color: '#f3ba2f' },
   { id: 'avax', name: 'Avalanche', abbr: 'AVAX', logo: 'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png', color: '#e84142' },
   { id: 'arb', name: 'Arbitrum', abbr: 'ARB', logo: 'https://assets.coingecko.com/coins/images/16547/small/photo_2023-03-29_21.47.00.jpeg', color: '#28a0f0' },
   { id: 'ftm', name: 'Fantom', abbr: 'FTM', logo: 'https://assets.coingecko.com/coins/images/4001/small/Fantom_round.png', color: '#1969ff' },
+  { id: 'base', name: 'Base', abbr: 'ETH', logo: 'https://assets.coingecko.com/coins/images/27501/small/base.png', color: '#0052ff' },
+  { id: 'op', name: 'Optimism', abbr: 'ETH', logo: 'https://assets.coingecko.com/coins/images/25244/small/Optimism.png', color: '#ff0420' },
+  { id: 'out', name: 'Robinhood Chain', abbr: 'ETH', logo: '/chainlogos/robinhood.svg', color: '#ccff00' },
 ];
 
 const ChainSelectorContainer = styled.div`

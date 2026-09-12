@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { X, Search, Loader } from 'react-feather';
-import { KUMABREEDER_TOKENS } from '../data/tokens';
+import { KUMABREEDER_TOKENS, SOLANA_TOKENS } from '../data/tokens';
 import Image from 'next/image';
 
 const Overlay = styled.div`
@@ -228,22 +228,26 @@ const CustomTokenInfo = styled.div`
   flex: 1;
 `;
 
-const TokenModal = ({ isOpen, onClose, onSelectToken, selectedToken }) => {
+const TokenModal = ({ isOpen, onClose, onSelectToken, selectedToken, chain }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [customTokens, setCustomTokens] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [foundToken, setFoundToken] = useState(null);
   const searchTimeoutRef = useRef(null);
 
+  const isSolChain = chain?.id === 'sol' || chain?.id === 'solana';
+  const tokenCatalog = isSolChain ? SOLANA_TOKENS : KUMABREEDER_TOKENS;
+
   // Check if search query is an address
   const isAddress = searchQuery.startsWith('0x') && searchQuery.length >= 10;
 
   // Filter predefined tokens
-  const filteredTokens = KUMABREEDER_TOKENS.filter(
+  const q = searchQuery.toLowerCase();
+  const filteredTokens = tokenCatalog.filter(
     token =>
-      token.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      token.address.toLowerCase().includes(searchQuery.toLowerCase())
+      token.symbol.toLowerCase().includes(q) ||
+      token.name.toLowerCase().includes(q) ||
+      (token.address || '').toLowerCase().includes(q)
   );
 
   // Search for custom tokens via DexScreener
@@ -262,6 +266,12 @@ const TokenModal = ({ isOpen, onClose, onSelectToken, selectedToken }) => {
       setIsSearching(true);
 
       try {
+        if (isSolChain) {
+          setFoundToken(null);
+          setCustomTokens([]);
+          setIsSearching(false);
+          return;
+        }
         if (isAddress) {
           // Search by address
           const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${searchQuery}`);
@@ -331,7 +341,7 @@ const TokenModal = ({ isOpen, onClose, onSelectToken, selectedToken }) => {
     }, 300);
 
     return () => clearTimeout(searchTimeoutRef.current);
-  }, [searchQuery, isAddress]);
+  }, [searchQuery, isAddress, isSolChain]);
 
   // Reset state when modal closes
   useEffect(() => {
@@ -420,9 +430,9 @@ const TokenModal = ({ isOpen, onClose, onSelectToken, selectedToken }) => {
               {(customTokens.length > 0 || foundToken) && <SectionTitle>Popular Tokens</SectionTitle>}
               {filteredTokens.map((token) => (
                 <TokenItem
-                  key={token.symbol}
+                  key={token.address || token.symbol}
                   onClick={() => handleSelectToken(token)}
-                  $selected={selectedToken?.symbol === token.symbol}
+                  $selected={selectedToken?.address === token.address}
                 >
                   <TokenInfo>
                     <TokenIcon>

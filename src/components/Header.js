@@ -981,6 +981,41 @@ const Header = () => {
             >
               Meme Liquidity
             </DropdownItem>
+            {/* uncomment when Laurence pins — Infinite Loop / DEX (vAMM) / Vaults under More
+            <DropdownItem
+              href="/infinite-loop"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push('/infinite-loop');
+                setDropdownOpen(false);
+              }}
+              style={isActive('/infinite-loop') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
+            >
+              Infinite Loop
+            </DropdownItem>
+            <DropdownItem
+              href="/dex"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push('/dex');
+                setDropdownOpen(false);
+              }}
+              style={isActive('/dex') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
+            >
+              DEX (vAMM)
+            </DropdownItem>
+            <DropdownItem
+              href="/vaults"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push('/vaults');
+                setDropdownOpen(false);
+              }}
+              style={isActive('/vaults') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
+            >
+              Vaults
+            </DropdownItem>
+            */}
             <DropdownItem
               href="/monthly-revenue"
               onClick={(e) => {
