@@ -668,9 +668,9 @@ export default function DKumaBreeder() {
   const handleApprove = async () => {
     if (!isConnected || !amount) return
     try {
-      addNotification('Approving dKUMA...', 'info')
+      addNotification('Approving exact dKUMA amount (not unlimited)...', 'info')
       await approve(amount)
-      addNotification('dKUMA approved successfully!', 'success')
+      addNotification('Exact dKUMA amount approved.', 'success')
     } catch (err) {
       addNotification(err.message || 'Approval failed', 'error')
     }
@@ -824,7 +824,7 @@ export default function DKumaBreeder() {
                   ) : (
                     <>
                       <CheckCircle size={16} />
-                      APPROVE dKUMA
+                      APPROVE EXACT AMOUNT
                     </>
                   )}
                 </ApproveButton>

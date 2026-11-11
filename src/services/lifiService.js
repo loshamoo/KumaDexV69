@@ -2,19 +2,12 @@
 // Integrates with LI.FI Diamond Contract: 0x6AA981bFF95eDfea36Bdae98C26B274FfcafE8d3
 
 import { ethers } from 'ethers';
-import { LIFI_DIAMOND_ADDRESS, LIFI_DIAMOND_ABI, ERC20_ABI } from '../contracts/LiFiDiamondABI';
-import {
-  getFeeRecipient,
-  FEE_PERCENT,
-  INTEGRATOR,
-  FEE_CONFIG,
-} from '../config/feeRecipients';
+import { LIFI_DIAMOND_ADDRESS, ERC20_ABI } from '../contracts/LiFiDiamondABI';
+import { FEE_CONFIG, getFeeRecipient } from '../config/feeRecipients';
+import { buildLifiQuoteQueryParams, buildLifiRouteOptions } from '../lib/lifiFeeParams';
+import { planExactApproval, toBigIntAmount } from '../lib/tokenApproval';
 
 const LIFI_API_BASE = 'https://li.quest/v1';
-
-// KumaDex Integrator Configuration (cutover via feeRecipients.js)
-const KUMADEX_INTEGRATOR = INTEGRATOR;
-const KUMADEX_FEE_PERCENT = FEE_PERCENT;
 
 // Supported chains for LI.FI
 export const SUPPORTED_CHAINS = {
@@ -103,6 +96,11 @@ export async function ensureWalletChain(chainId) {
 const NATIVE_TOKEN = '0x0000000000000000000000000000000000000000';
 const NATIVE_TOKEN_ALT = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
+function toTxBigInt(value, fallback = 0n) {
+  if (value == null || value === '') return fallback;
+  return toBigIntAmount(value);
+}
+
 /**
  * Get available tokens for a specific chain
  */
@@ -119,8 +117,9 @@ export async function getTokensForChain(chainId) {
 }
 
 /**
- * Get swap quote from LI.FI API
- * Includes KumaDex integrator fee sent to fee recipient wallet
+ * Get swap quote from LI.FI API.
+ * Passes integrator + fee so LI.FI can collect the configured integrator fee.
+ * Does not pass `referrer` (tracking-only; does not move funds).
  */
 export async function getQuote({
   fromChainId,
@@ -134,6 +133,7 @@ export async function getQuote({
   skipFee = false,
 }) {
   try {
+    const feeParams = buildLifiQuoteQueryParams({ skipFee });
     const params = new URLSearchParams({
       fromChain: fromChainId.toString(),
       toChain: toChainId.toString(),
@@ -142,14 +142,13 @@ export async function getQuote({
       fromAmount: fromAmount,
       fromAddress: fromAddress,
       slippage: (slippage / 100).toString(),
-      integrator: KUMADEX_INTEGRATOR,
-      referrer: getFeeRecipient(),
+      integrator: feeParams.integrator,
     });
     if (toAddress) {
       params.set('toAddress', toAddress);
     }
-    if (!skipFee) {
-      params.set('fee', KUMADEX_FEE_PERCENT.toString());
+    if (feeParams.fee != null) {
+      params.set('fee', feeParams.fee);
     }
 
     const response = await fetch(`${LIFI_API_BASE}/quote?${params}`);
@@ -181,8 +180,8 @@ export async function getQuote({
 }
 
 /**
- * Get multiple route options for a swap
- * Includes KumaDex integrator fee sent to fee recipient wallet
+ * Get multiple route options for a swap.
+ * Integrator + fee only; no referrer fee-routing claim.
  */
 export async function getRoutes({
   fromChainId,
@@ -192,22 +191,23 @@ export async function getRoutes({
   fromAmount,
   fromAddress,
   slippage = 0.5,
+  skipFee = false,
 }) {
   try {
+    const feeOptions = buildLifiRouteOptions({ skipFee });
     const requestBody = {
-      fromChainId: parseInt(fromChainId),
-      toChainId: parseInt(toChainId),
+      fromChainId: parseInt(fromChainId, 10),
+      toChainId: parseInt(toChainId, 10),
       fromTokenAddress: fromToken,
       toTokenAddress: toToken,
       fromAmount: fromAmount,
       fromAddress: fromAddress,
       options: {
         slippage: slippage / 100,
-        integrator: KUMADEX_INTEGRATOR,
-        fee: KUMADEX_FEE_PERCENT,
-        referrer: getFeeRecipient(),
+        integrator: feeOptions.integrator,
         order: 'RECOMMENDED',
         allowSwitchChain: false,
+        ...(feeOptions.fee != null ? { fee: feeOptions.fee } : {}),
       },
     };
 
@@ -231,31 +231,38 @@ export async function getRoutes({
 }
 
 /**
- * Check and set token approval if needed
+ * Check and set an exact-amount token approval if needed.
+ * Resets to zero first when the token requires it (USDT-style).
  */
-export async function checkAndApproveToken(signer, tokenAddress, amount) {
-  // Native tokens don't need approval
-  if (tokenAddress === NATIVE_TOKEN || tokenAddress.toLowerCase() === NATIVE_TOKEN_ALT.toLowerCase()) {
-    return { approved: true, hash: null };
+export async function checkAndApproveToken(signer, tokenAddress, amount, { onStatus } = {}) {
+  if (!tokenAddress || tokenAddress === NATIVE_TOKEN || tokenAddress.toLowerCase() === NATIVE_TOKEN_ALT.toLowerCase()) {
+    return { approved: true, hash: null, resetHash: null };
   }
 
   try {
     const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
     const userAddress = await signer.getAddress();
 
-    // Check current allowance
     const currentAllowance = await tokenContract.allowance(userAddress, LIFI_DIAMOND_ADDRESS);
-    const amountBN = ethers.BigNumber.from(amount);
+    const plan = planExactApproval(currentAllowance, amount);
 
-    if (currentAllowance.gte(amountBN)) {
-      return { approved: true, hash: null };
+    if (plan.skip) {
+      return { approved: true, hash: null, resetHash: null };
     }
 
-    // Approve max amount
-    const tx = await tokenContract.approve(LIFI_DIAMOND_ADDRESS, ethers.constants.MaxUint256);
+    let resetHash = null;
+    if (plan.resetFirst) {
+      if (onStatus) onStatus('resetting-approval');
+      const resetTx = await tokenContract.approve(LIFI_DIAMOND_ADDRESS, 0n);
+      await resetTx.wait();
+      resetHash = resetTx.hash;
+    }
+
+    if (onStatus) onStatus('approving');
+    const tx = await tokenContract.approve(LIFI_DIAMOND_ADDRESS, plan.amount);
     await tx.wait();
 
-    return { approved: true, hash: tx.hash };
+    return { approved: true, hash: tx.hash, resetHash };
   } catch (error) {
     console.error('Error approving token:', error);
     throw error;
@@ -273,18 +280,16 @@ export async function executeSwap(signer, quote) {
       throw new Error('No transaction request in quote');
     }
 
-    // Check approval first for non-native tokens
     if (action.fromToken.address !== NATIVE_TOKEN &&
         action.fromToken.address.toLowerCase() !== NATIVE_TOKEN_ALT.toLowerCase()) {
       await checkAndApproveToken(signer, action.fromToken.address, action.fromAmount);
     }
 
-    // Execute the swap transaction
     const tx = await signer.sendTransaction({
       to: transactionRequest.to,
       data: transactionRequest.data,
-      value: transactionRequest.value ? ethers.BigNumber.from(transactionRequest.value) : 0,
-      gasLimit: transactionRequest.gasLimit ? ethers.BigNumber.from(transactionRequest.gasLimit) : undefined,
+      value: toTxBigInt(transactionRequest.value, 0n),
+      gasLimit: transactionRequest.gasLimit ? toTxBigInt(transactionRequest.gasLimit) : undefined,
     });
 
     return {
@@ -324,11 +329,11 @@ export async function getTransactionStatus(txHash, fromChainId, toChainId) {
 }
 
 /**
- * Format token amount for display
+ * Format token amount for display (ethers v6)
  */
 export function formatTokenAmount(amount, decimals, maxDecimals = 6) {
   if (!amount) return '0';
-  const value = ethers.utils.formatUnits(amount, decimals);
+  const value = ethers.formatUnits(amount.toString(), decimals);
   const num = parseFloat(value);
   if (num === 0) return '0';
   if (num < 0.000001) return '<0.000001';
@@ -336,11 +341,11 @@ export function formatTokenAmount(amount, decimals, maxDecimals = 6) {
 }
 
 /**
- * Parse token amount from user input
+ * Parse token amount from user input (ethers v6)
  */
 export function parseTokenAmount(amount, decimals) {
   if (!amount || isNaN(amount)) return '0';
-  return ethers.utils.parseUnits(amount.toString(), decimals).toString();
+  return ethers.parseUnits(amount.toString(), decimals).toString();
 }
 
 /**
@@ -373,7 +378,6 @@ export function getExplorerUrl(chainId, txHash) {
   return `${baseUrl}${txHash}`;
 }
 
-// Re-export fee configuration for UI display (cutover-aware)
 export { FEE_CONFIG, getFeeRecipient };
 
 export default {

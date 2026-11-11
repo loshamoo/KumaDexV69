@@ -145,6 +145,14 @@ const SwapDetails = ({ fromAmount, toAmount, fromToken, toToken, slippage }) => 
             <DetailsValue>{FEE_CONFIG.feePercentDisplay}</DetailsValue>
           </DetailsRow>
 
+          <DetailsRow>
+            <DetailsLabel>
+              Token approval
+              <InfoIcon size={12} />
+            </DetailsLabel>
+            <DetailsValue>Exact swap amount only</DetailsValue>
+          </DetailsRow>
+
           <DetailsRow $last>
             <DetailsLabel>
               Route

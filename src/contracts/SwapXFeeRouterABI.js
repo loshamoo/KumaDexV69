@@ -1,6 +1,6 @@
 /**
  * Minimal SwapXFeeRouter ABI — Swept event + read getters for Hub /infinite-loop panel.
- * Source: kuma-audit foundry out/SwapXFeeRouter.sol (fragment). Public: loshamoo only.
+ * Source: kuma-audit foundry out/SwapXFeeRouter.sol (fragment). Public: loshamoo / Kuma community.
  */
 
 export const SWAPX_FEE_ROUTER_ABI = [

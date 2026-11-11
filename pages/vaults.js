@@ -291,8 +291,8 @@ export default function VaultsPage() {
           </Card>
 
           <Foot>
-            Public notes: loshamoo. Local Hub checkout only until Laurence pins nav under More /
-            Gravity. No deposit UI until Timelock owns the vault admin.
+            Public notes: loshamoo / Kuma community. Local Hub checkout only until nav for this
+            page is pinned under More / Gravity. No deposit UI until Timelock owns the vault admin.
           </Foot>
         </PageShell>
       </MainContent>

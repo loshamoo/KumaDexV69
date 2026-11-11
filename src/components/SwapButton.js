@@ -94,8 +94,8 @@ async function getEvmAddress() {
   if (!window.ethereum) {
     throw new Error('Please install MetaMask to swap on EVM chains');
   }
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const signer = provider.getSigner();
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
   const userAddress = await signer.getAddress();
   return { provider, signer, userAddress };
 }
@@ -174,7 +174,7 @@ const SwapButton = ({
         fromAddress = evm.userAddress;
 
         const network = await evm.provider.getNetwork();
-        if (network.chainId !== fromChainId) {
+        if (network.chainId !== BigInt(fromChainId)) {
           setSwapStatus('switching-network');
           try {
             await ensureWalletChain(fromChainId);
@@ -216,9 +216,19 @@ const SwapButton = ({
         // EVM execute — same as before (approval + Diamond send)
         if (!isNativeToken(fromTokenAddress) && fromTokenAddress !== '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
           setSwapStatus('approving');
-          const approval = await checkAndApproveToken(evmSigner, fromToken.address, fromAmountWei);
+          const approval = await checkAndApproveToken(
+            evmSigner,
+            fromTokenAddress,
+            fromAmountWei,
+            {
+              onStatus: (status) => {
+                if (status === 'resetting-approval') setSwapStatus('resetting-approval');
+                if (status === 'approving') setSwapStatus('approving');
+              },
+            }
+          );
           if (approval.hash) {
-            console.log('Approval tx:', approval.hash);
+            console.log('Exact-amount approval tx:', approval.hash);
           }
         }
         setSwapStatus('swapping');
@@ -249,7 +259,8 @@ const SwapButton = ({
         case 'connecting-phantom': return 'Connect Phantom...';
         case 'switching-network': return 'Switch Network...';
         case 'getting-quote': return 'Getting Quote...';
-        case 'approving': return 'Approving Token...';
+        case 'resetting-approval': return 'Resetting allowance...';
+        case 'approving': return 'Approving exact amount...';
         case 'swapping': return 'Swapping...';
         default: return 'Processing...';
       }

@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 function Error({ statusCode }) {
   return (
     <div style={{
@@ -18,7 +20,7 @@ function Error({ statusCode }) {
           ? `A ${statusCode} error occurred on the server`
           : 'An error occurred on the client'}
       </p>
-      <a href="/" style={{
+      <Link href="/" style={{
         marginTop: '2rem',
         padding: '0.75rem 1.5rem',
         backgroundColor: '#ff3333',
@@ -28,7 +30,7 @@ function Error({ statusCode }) {
         transition: 'background-color 0.3s'
       }}>
         Return Home
-      </a>
+      </Link>
     </div>
   )
 }

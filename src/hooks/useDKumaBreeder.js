@@ -8,6 +8,7 @@ import {
   ERC20_ABI
 } from '../contracts/dKumaBreederABI';
 import Web3 from 'web3';
+import { planExactApproval } from '../lib/tokenApproval';
 
 // Cache configuration
 const CACHE_KEY = 'dkuma_breeder_cache_v1';
@@ -331,11 +332,21 @@ const useDKumaBreeder = () => {
 
     try {
       const amountWei = walletWeb3.utils.toWei(amount.toString(), 'ether');
-      const maxApproval = walletWeb3.utils.toWei('999999999999999999', 'ether');
+      const currentAllowance = await dkumaContract.methods.allowance(account, DKUMA_BREEDER_ADDRESS).call();
+      const plan = planExactApproval(currentAllowance, amountWei);
+
+      if (plan.skip) {
+        await fetchBreederData(true);
+        return { skipped: true };
+      }
+
+      if (plan.resetFirst) {
+        await dkumaContract.methods.approve(DKUMA_BREEDER_ADDRESS, '0').send({ from: account });
+      }
 
       const tx = await dkumaContract.methods.approve(
         DKUMA_BREEDER_ADDRESS,
-        maxApproval
+        plan.amount.toString()
       ).send({ from: account });
 
       await fetchBreederData(true);
