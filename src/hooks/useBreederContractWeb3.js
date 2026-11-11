@@ -9,6 +9,7 @@ import {
   NETWORK_CONFIG
 } from '../contracts/KumaBreederABI';
 import Web3 from 'web3';
+import { planExactApproval } from '../lib/tokenApproval';
 
 // Cache keys
 const CACHE_KEY = 'kumabreeder_pools_cache_v4';
@@ -784,8 +785,12 @@ const useBreederContractWeb3 = () => {
       const amountWei = walletWeb3.utils.toWei(amount, 'ether');
 
       const allowance = await lpContract.methods.allowance(account, KUMABREEDER_ADDRESS).call();
-      if (BigInt(allowance) < BigInt(amountWei)) {
-        await lpContract.methods.approve(KUMABREEDER_ADDRESS, '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff').send({ from: account });
+      const plan = planExactApproval(allowance, amountWei);
+      if (!plan.skip) {
+        if (plan.resetFirst) {
+          await lpContract.methods.approve(KUMABREEDER_ADDRESS, '0').send({ from: account });
+        }
+        await lpContract.methods.approve(KUMABREEDER_ADDRESS, plan.amount.toString()).send({ from: account });
       }
 
       const tx = await contract.methods.deposit(pid, amountWei).send({ from: account });

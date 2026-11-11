@@ -814,7 +814,7 @@ const Header = () => {
               }}
               style={isActive('/kumadex') ? { background: 'rgba(255, 255, 255, 0.1)', color: '#fff' } : {}}
             >
-              KumaDex (Perp)
+              KumaDex Perp (not live)
             </DropdownItem>
           </DropdownMenu>
         </DropdownContainer>
@@ -981,7 +981,7 @@ const Header = () => {
             >
               Meme Liquidity
             </DropdownItem>
-            {/* uncomment when Laurence pins — Infinite Loop / DEX (vAMM) / Vaults under More
+            {/* uncomment when nav is pinned — Infinite Loop / DEX (vAMM) / Vaults under More
             <DropdownItem
               href="/infinite-loop"
               onClick={(e) => {

@@ -202,7 +202,7 @@ function FeeCutoverPanel() {
         const rpc =
           (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_RPC_URL) ||
           'https://ethereum.publicnode.com'
-        const provider = new ethers.providers.JsonRpcProvider(rpc)
+        const provider = new ethers.JsonRpcProvider(rpc)
         const c = new ethers.Contract(SWAPX_FEE_ROUTER, SWAPX_FEE_ROUTER_ABI, provider)
         const [paused, lastSweepAt, bpsBreeder, bpsVessel] = await Promise.all([
           c.paused(),
@@ -262,22 +262,31 @@ function FeeCutoverPanel() {
 
   return (
     <Card>
-      <CardTitle>SwapX fee cutover</CardTitle>
+      <CardTitle>SwapX fee router (on-chain)</CardTitle>
+      <Meta>
+        LI.FI integrator fees use <code>integrator=kumadex</code> and the <code>fee</code> quote
+        parameter. Fees are paid to the wallet configured for that integrator in the LI.FI Partner
+        Portal — not via <code>referrer</code> (tracking only). Setting a router address here does
+        not by itself redirect LI.FI fees.
+      </Meta>
       {!cutoverActive ? (
-        <Meta>
-          Router env unset — LiFi fees still go to legacy EOA{' '}
+        <Meta style={{ marginTop: 8 }}>
+          Router env unset. Intended on-chain hop (once the portal wallet is pointed at it):{' '}
           <A href={`https://etherscan.io/address/${LEGACY_FEE_EOA}`} target="_blank" rel="noreferrer">
             {shortAddr(LEGACY_FEE_EOA)}
           </A>
-          . Set <code>NEXT_PUBLIC_SWAPX_FEE_ROUTER</code> after deploy to activate.
+          {' '}(legacy EOA). Set <code>NEXT_PUBLIC_SWAPX_FEE_ROUTER</code> after deploy to show
+          on-chain sweep status.
         </Meta>
       ) : (
         <>
-          <Meta>
-            Cutover <strong>active</strong>. Referrer:{' '}
+          <Meta style={{ marginTop: 8 }}>
+            Router env set:{' '}
             <A href={`https://etherscan.io/address/${recipient}`} target="_blank" rel="noreferrer">
               {shortAddr(recipient)}
             </A>
+            . On-chain sweep UI only — portal wallet for <code>kumadex</code> must still be set
+            to this router by the owner.
             {state.bpsBreeder != null && (
               <>
                 {' '}

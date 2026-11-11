@@ -2078,7 +2078,7 @@ apr = (yearlyDkumaRewards × dkumaPrice / yourStakeValue) × 100`}
               <li>Acquire dKUMA tokens (earned from the main Kuma Breeder or purchased on Uniswap)</li>
               <li>Navigate to the dKUMA Breeder Staking page</li>
               <li>Connect your wallet</li>
-              <li>Approve dKUMA spending (first time only)</li>
+              <li>Approve the exact dKUMA amount for this stake (not unlimited)</li>
               <li>Enter the amount to stake and click "STAKE"</li>
               <li>Watch your USDC rewards accumulate</li>
               <li>Claim rewards whenever you want</li>

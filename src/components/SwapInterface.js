@@ -8,6 +8,7 @@ import SwapSettings from './SwapSettings';
 import SwapDetails from './SwapDetails';
 import BreederNotification from './BreederNotification';
 import { KUMABREEDER_TOKENS, SOLANA_NATIVE_TOKEN, isSolanaToken } from '../data/tokens';
+import { previewSwapOutput, formatPreviewAmount } from '../lib/swapQuote';
 
 const SwapContainer = styled.div`
   background: #1a1f2e;
@@ -170,7 +171,7 @@ const formatRate = (rate) => {
 // Default chain data for initial state
 const DEFAULT_CHAIN = { id: 'eth', name: 'Ethereum', abbr: 'ETH', logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', color: '#627eea' };
 
-const SwapInterface = ({ leverage = 1, leverageControls, selectedPool = null, onTokenChange, initialToToken = null, hideChainSelector = false }) => {
+const SwapInterface = ({ onTokenChange, initialToToken = null, hideChainSelector = false }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [address, setAddress] = useState(null);
   const [fromAmount, setFromAmount] = useState('');
@@ -216,23 +217,6 @@ const SwapInterface = ({ leverage = 1, leverageControls, selectedPool = null, on
       }
     }
   }, [initialToToken]);
-
-  // Update toToken when selectedPool changes (from kumadex perps page)
-  useEffect(() => {
-    if (selectedPool) {
-      // Find the corresponding token from KUMABREEDER_TOKENS
-      const poolToken = KUMABREEDER_TOKENS.find(
-        token => token.symbol === selectedPool.symbol ||
-                 token.symbol === selectedPool.symbol.split('-')[0]
-      );
-      if (poolToken && poolToken.symbol !== toToken.symbol) {
-        setToToken(poolToken);
-        // Reset amounts when pool changes
-        setFromAmount('');
-        setToAmount('');
-      }
-    }
-  }, [selectedPool]);
 
   useEffect(() => {
     checkConnection();
@@ -293,15 +277,15 @@ const SwapInterface = ({ leverage = 1, leverageControls, selectedPool = null, on
           loading: false
         });
 
-        // Recalculate amount if there's already an input
         if (fromAmount && fromPrice && toPrice) {
-          const inputValue = parseFloat(fromAmount);
-          const fromValueUsd = inputValue * fromPrice;
-          const outputAmount = fromValueUsd / toPrice;
-          // Apply price impact (0.3% base fee + slippage based on size)
-          const priceImpact = Math.min(inputValue * 0.001, 0.03);
-          const adjustedOutput = outputAmount * (1 - priceImpact) * leverage;
-          setToAmount(adjustedOutput.toFixed(6));
+          const adjustedOutput = previewSwapOutput({
+            fromAmount,
+            fromPrice,
+            toPrice,
+          });
+          if (adjustedOutput != null) {
+            setToAmount(formatPreviewAmount(adjustedOutput));
+          }
         }
       } catch (error) {
         console.error('Error fetching token prices:', error);
@@ -385,12 +369,11 @@ const SwapInterface = ({ leverage = 1, leverageControls, selectedPool = null, on
     setToAmount('...');
   }, [fromToken, toToken, fromChain, toChain, fromAmount, toAmount]);
 
-  // Recalculate when leverage or prices change
   useEffect(() => {
     if (fromAmount) {
       handleFromAmountChange(fromAmount);
     }
-  }, [leverage, tokenPrices.fromPrice, tokenPrices.toPrice]);
+  }, [tokenPrices.fromPrice, tokenPrices.toPrice]);
 
   // Define breeder pool tokens (tokens that are stakeable in breeder pools)
   const BREEDER_POOL_TOKENS = ['KUMA', 'SHIB', 'LEASH', 'ELON', 'AKITA'];
@@ -417,36 +400,16 @@ const SwapInterface = ({ leverage = 1, leverageControls, selectedPool = null, on
     setFromAmount(value);
 
     if (value && !isNaN(Number(value)) && Number(value) > 0) {
-      const inputAmount = Number(value);
       const { fromPrice, toPrice } = tokenPrices;
+      const adjustedOutput = previewSwapOutput({
+        fromAmount: value,
+        fromPrice,
+        toPrice,
+      });
 
-      if (fromPrice && toPrice && toPrice > 0) {
-        // Calculate USD value of input
-        const fromValueUsd = inputAmount * fromPrice;
-
-        // Calculate output amount based on real prices
-        const outputAmount = fromValueUsd / toPrice;
-
-        // Apply price impact (0.3% base + size-based impact, max 5%)
-        const sizeImpact = Math.min((inputAmount * fromPrice / 10000) * 0.01, 0.02);
-        const totalImpact = 0.003 + sizeImpact; // 0.3% base fee + size impact
-
-        // Apply leverage and price impact
-        const leveragedOutput = outputAmount * leverage;
-        const adjustedOutput = leveragedOutput * (1 - totalImpact);
-
-        // Format output based on magnitude
-        if (adjustedOutput >= 1000000) {
-          setToAmount(adjustedOutput.toLocaleString('en-US', { maximumFractionDigits: 2 }));
-        } else if (adjustedOutput >= 1) {
-          setToAmount(adjustedOutput.toFixed(4));
-        } else if (adjustedOutput >= 0.000001) {
-          setToAmount(adjustedOutput.toFixed(8));
-        } else {
-          setToAmount(adjustedOutput.toExponential(4));
-        }
+      if (adjustedOutput != null) {
+        setToAmount(formatPreviewAmount(adjustedOutput));
       } else {
-        // Fallback if prices not loaded - show loading indicator
         setToAmount('...');
       }
 
@@ -462,12 +425,7 @@ const SwapInterface = ({ leverage = 1, leverageControls, selectedPool = null, on
     <>
       <SwapContainer>
         <SwapHeader>
-          <Title>
-            {selectedPool
-              ? `${selectedPool.symbol} Perp ${leverage > 1 ? `(${leverage}x)` : ''}`
-              : `SwapX ${leverage > 1 ? `(${leverage}x)` : ''}`
-            }
-          </Title>
+          <Title>SwapX</Title>
           <SettingsButton onClick={() => setIsSettingsOpen(true)}>
             <Settings size={20} />
           </SettingsButton>
@@ -528,8 +486,6 @@ const SwapInterface = ({ leverage = 1, leverageControls, selectedPool = null, on
             </CrossChainIndicator>
           )}
 
-          {leverageControls}
-          
           <SwapButton
             isConnected={isConnected}
             fromAmount={fromAmount}

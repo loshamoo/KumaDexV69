@@ -364,6 +364,13 @@ const Input = styled.input`
   }
 `
 
+const ModalNote = styled.p`
+  font-size: 13px;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  line-height: 1.5;
+  margin: 0 0 16px;
+`
+
 const ModalActions = styled.div`
   display: flex;
   gap: 12px;
@@ -518,7 +525,12 @@ export default function BreederPools() {
     if (!selectedPool || !amount) return
 
     try {
-      setNotification({ type: 'pending', message: `Processing ${modalType}...` })
+      setNotification({
+        type: 'pending',
+        message: modalType === 'deposit'
+          ? 'Approving exact LP amount (not unlimited), then depositing...'
+          : `Processing ${modalType}...`,
+      })
       
       let receipt;
       if (modalType === 'deposit') {
@@ -880,6 +892,12 @@ export default function BreederPools() {
               min="0"
               step="0.01"
             />
+            {modalType === 'deposit' && (
+              <ModalNote>
+                Deposit requests an exact-amount token approval for this stake only (not unlimited).
+                Some tokens require a reset-to-zero approval first.
+              </ModalNote>
+            )}
             <ModalActions>
               <ActionButton className="primary" onClick={handleAction}>
                 Confirm

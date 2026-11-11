@@ -505,32 +505,8 @@ const PerpPrice = styled.div`
 
 const PerpPriceChange = styled.div`
   font-size: 14px;
-  color: #22c55e;
+  color: rgba(255, 255, 255, 0.55);
   margin-bottom: 20px;
-`
-
-const PerpButtons = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
-`
-
-const PerpButton = styled.button`
-  flex: 1;
-  padding: 12px;
-  border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: ${({ $type }) => $type === 'long' ? '#22c55e' : '#ef4444'};
-  color: white;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px ${({ $type }) => $type === 'long' ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)'};
-  }
 `
 
 const PerpInput = styled.div`
@@ -1135,7 +1111,7 @@ export default function Home() {
     <>
       <Head>
         <title>KumaDex - The Kuma DeFi Ecosystem</title>
-        <meta name="description" content="Swap, breed and earn with the Kuma ecosystem. SwapX, Perpetuals, Breeder pools, and more." />
+        <meta name="description" content="Swap, breed and earn with the Kuma ecosystem. SwapX, Breeder pools, and more. Perpetuals are not live." />
       </Head>
       <AppContainer>
         <Header />
@@ -1242,7 +1218,7 @@ export default function Home() {
             </HeroLogos>
             <HeroTitle>Swap. Breed. Earn. <br></br>To Infinity & Beyond.</HeroTitle>
             <HeroSubtitle>
-              An infinite loop of swapping tokens, trading perpetuals, and earning yields from the Meme Index.
+              An infinite loop of swapping tokens, staking in Breeder, and earning yields from the Meme Index.
             </HeroSubtitle>
             <HeroButtons>
               <PrimaryButton onClick={() => router.push('/swap')}>
@@ -1318,17 +1294,17 @@ export default function Home() {
               </TokenList>
             </ShowcaseCard>
 
-            {/* KumaDex Perps Card */}
+            {/* KumaDex Perps Card — status only, no tradable UI */}
             <ShowcaseCard onClick={() => router.push('/kumadex')} style={{ overflow: 'hidden' }}>
               <CardLabel>
                 KumaDex Perps
               </CardLabel>
-              <CardTitle>Leverage. Trade. Profit.</CardTitle>
+              <CardTitle>Not live. Coming via DAO.</CardTitle>
               <CardDescription>
-                Trade vAMM perpetual contracts with up to 25x leverage. Advanced charts, liquidation tracking, and low fees.
+                Perpetual markets are not deployed. There is no 1x–25x trading UI. Status and governance path only.
               </CardDescription>
               <CardButton>
-                Coming Soon <ArrowRight size={18} />
+                View status <ArrowRight size={18} />
               </CardButton>
 
               <PerpCard>
@@ -1344,20 +1320,15 @@ export default function Home() {
                     </PerpPairIcons>
                     <PerpPairName>KUMA/USD</PerpPairName>
                   </PerpPair>
-                  <LeverageBadge>25x</LeverageBadge>
+                  <LeverageBadge>Not live</LeverageBadge>
                 </PerpCardHeader>
 
-                <PerpPrice>$0.00001247</PerpPrice>
-                <PerpPriceChange>+12.8% (24h)</PerpPriceChange>
-
-                <PerpButtons>
-                  <PerpButton $type="long">Long</PerpButton>
-                  <PerpButton $type="short">Short</PerpButton>
-                </PerpButtons>
+                <PerpPrice>No mark</PerpPrice>
+                <PerpPriceChange>Contracts not deployed</PerpPriceChange>
 
                 <PerpInput>
-                  <PerpInputLabel>Position Size</PerpInputLabel>
-                  <PerpInputValue>500M KUMA</PerpInputValue>
+                  <PerpInputLabel>Trading</PerpInputLabel>
+                  <PerpInputValue>Coming via DAO</PerpInputValue>
                 </PerpInput>
               </PerpCard>
             </ShowcaseCard>

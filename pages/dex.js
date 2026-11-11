@@ -302,8 +302,8 @@ export default function DexPage() {
           </Card>
 
           <Foot>
-            Public notes: loshamoo. Local Hub checkout only until Laurence pins nav under More /
-            Gravity. Permanent KUMA/WETH LP stays on Uniswap — vAMM has no LPs.
+            Public notes: loshamoo / Kuma community. Local Hub checkout only until nav for this
+            page is pinned under More / Gravity. Permanent KUMA/WETH LP stays on Uniswap — vAMM has no LPs.
           </Foot>
         </PageShell>
       </MainContent>
